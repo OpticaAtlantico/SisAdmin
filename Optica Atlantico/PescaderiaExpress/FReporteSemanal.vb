@@ -20,18 +20,6 @@ Public Class FReporteSemanal
     Dim idOrden As Integer = 0
     Public Property BackgroundWorker1 As Object
 
-    'Private Sub btn_Imprimir_Click(sender As Object, e As EventArgs) Handles btn_Imprimir.Click
-    '    Dim dt As DataTable = DirectCast(dgv_Datos.DataSource, DataTable)
-    '    If dt IsNot Nothing AndAlso dt.Rows.Count > 0 Then
-    '        Dim report As New ReporteSemanal()
-    '        report.SetDataSource(dt)
-    '        Dim viewer As New ReportViewer(report)
-    '        viewer.ShowDialog()
-    '    Else
-    '        MessageBox.Show("No hay datos para imprimir.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-    '    End If
-    'End Sub
-
     Public Sub EnviarPorEmail()
         Dim correo As New MailMessage
         Dim smtp As New SmtpClient("smtp.gmail.com", 587)
@@ -168,7 +156,6 @@ Public Class FReporteSemanal
     End Sub
 
     Sub CargarEncabezadoGridView()
-
         With Me.dgv_Datos
             .Columns(0).HeaderText = "Fecha de Venta" : .Columns(0).Width = 110 : .Columns(0).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
             .Columns(1).HeaderText = "#Orden" : .Columns(1).Width = 60 : .Columns(1).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
@@ -280,7 +267,6 @@ Public Class FReporteSemanal
                                            Me.dgv_Totales.DataSource = dtTotales
                                            CargarEncabezadoGridView()
                                            BorrarCeldasDuplicadas()
-                                           'AgregarFilaTotales()
                                            DesSeleccionarDatagridView()
                                        End If
                                    Catch ex As Exception
@@ -323,7 +309,6 @@ Public Class FReporteSemanal
             MsgBox(ex.Message)
             Return Nothing
         End Try
-
     End Function
 
     Private Sub btn_Buscar_Click(sender As Object, e As EventArgs) Handles btn_Buscar.Click
@@ -356,11 +341,9 @@ Public Class FReporteSemanal
             ProgressBar1.Visible = True
             bgWorker.RunWorkerAsync()
         End If
-        'ExportarAExcel(Me.dgv_Datos, Me.ProgressBar1)
     End Sub
 
     Private Sub bgWorker_DoWork(sender As Object, e As DoWorkEventArgs) Handles bgWorker.DoWork
-        'exportador.ExportarVentasExcel(dtDatos, rutaArchivo, AddressOf ReportarProgreso)
         exportador.ExportarReportePagosYProductos(dtDatos, dtProductos, NomOptica, AddressOf ReportarProgreso)
     End Sub
 
@@ -394,5 +377,4 @@ Public Class FReporteSemanal
             frm.CargarDetalleOrden(idOrden)
         End If
     End Sub
-
 End Class
