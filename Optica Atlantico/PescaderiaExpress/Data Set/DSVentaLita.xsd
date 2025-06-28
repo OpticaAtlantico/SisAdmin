@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="DSVentaLita" targetNamespace="http://tempuri.org/DSVentaLita.xsd" xmlns:mstns="http://tempuri.org/DSVentaLita.xsd" xmlns="http://tempuri.org/DSVentaLita.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:msprop="urn:schemas-microsoft-com:xml-msprop" attributeFormDefault="qualified" elementFormDefault="qualified">
+  <xs:annotation>
+    <xs:appinfo source="urn:schemas-microsoft-com:xml-msdatasource">
+      <DataSource DefaultConnectionIndex="0" FunctionsComponentName="QueriesTableAdapter" Modifier="AutoLayout, AnsiClass, Class, Public" SchemaSerializationMode="IncludeSchema" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
+        <Connections>
+          <Connection AppSettingsObjectName="MySettings" AppSettingsPropertyName="BDPescaderiaExpress" ConnectionStringObject="" IsAppSettingsProperty="true" Modifier="Assembly" Name="BDPescaderiaExpress (MySettings)" ParameterPrefix="@" PropertyReference="ApplicationSettings.PescaderiaExpress.My.MySettings.GlobalReference.Default.BDPescaderiaExpress" Provider="System.Data.SqlClient" />
+        </Connections>
+        <Tables>
+          <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="VVentaListaTableAdapter" GeneratorDataComponentClassName="VVentaListaTableAdapter" Name="VVentaLista" UserDataComponentName="VVentaListaTableAdapter">
+            <MainSource>
+              <DbSource ConnectionRef="BDPescaderiaExpress (MySettings)" DbObjectName="BDPescaderia.dbo.VVentaLista" DbObjectType="View" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="false" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="true" UserGetMethodName="GetData" UserSourceName="Fill">
+                <SelectCommand>
+                  <DbCommand CommandType="Text" ModifiedByUser="false">
+                    <CommandText>SELECT Especie, Peso, Precio, TotalReal, TotalCancelado, Recargo, TipoPago, PVenta, Reserva, idCliente, Cliente, idEspecie, idVenta, idVendedor, idUsuario, Fecha, Categoria, Comision, NTicket FROM dbo.VVentaLista</CommandText>
+                    <Parameters />
+                  </DbCommand>
+                </SelectCommand>
+              </DbSource>
+            </MainSource>
+            <Mappings>
+              <Mapping SourceColumn="Especie" DataSetColumn="Especie" />
+              <Mapping SourceColumn="Peso" DataSetColumn="Peso" />
+              <Mapping SourceColumn="Precio" DataSetColumn="Precio" />
+              <Mapping SourceColumn="TotalReal" DataSetColumn="TotalReal" />
+              <Mapping SourceColumn="TotalCancelado" DataSetColumn="TotalCancelado" />
+              <Mapping SourceColumn="Recargo" DataSetColumn="Recargo" />
+              <Mapping SourceColumn="TipoPago" DataSetColumn="TipoPago" />
+              <Mapping SourceColumn="PVenta" DataSetColumn="PVenta" />
+              <Mapping SourceColumn="Reserva" DataSetColumn="Reserva" />
+              <Mapping SourceColumn="idCliente" DataSetColumn="idCliente" />
+              <Mapping SourceColumn="Cliente" DataSetColumn="Cliente" />
+              <Mapping SourceColumn="idEspecie" DataSetColumn="idEspecie" />
+              <Mapping SourceColumn="idVenta" DataSetColumn="idVenta" />
+              <Mapping SourceColumn="idVendedor" DataSetColumn="idVendedor" />
+              <Mapping SourceColumn="idUsuario" DataSetColumn="idUsuario" />
+              <Mapping SourceColumn="Fecha" DataSetColumn="Fecha" />
+              <Mapping SourceColumn="Categoria" DataSetColumn="Categoria" />
+              <Mapping SourceColumn="Comision" DataSetColumn="Comision" />
+              <Mapping SourceColumn="NTicket" DataSetColumn="NTicket" />
+            </Mappings>
+            <Sources />
+          </TableAdapter>
+        </Tables>
+        <Sources />
+      </DataSource>
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:element name="DSVentaLita" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msprop:EnableTableAdapterManager="true" msprop:Generator_DataSetName="DSVentaLita" msprop:Generator_UserDSName="DSVentaLita">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="VVentaLista" msprop:Generator_TableClassName="VVentaListaDataTable" msprop:Generator_TableVarName="tableVVentaLista" msprop:Generator_TablePropName="VVentaLista" msprop:Generator_RowDeletingName="VVentaListaRowDeleting" msprop:Generator_RowChangingName="VVentaListaRowChanging" msprop:Generator_RowEvHandlerName="VVentaListaRowChangeEventHandler" msprop:Generator_RowDeletedName="VVentaListaRowDeleted" msprop:Generator_UserTableName="VVentaLista" msprop:Generator_RowChangedName="VVentaListaRowChanged" msprop:Generator_RowEvArgName="VVentaListaRowChangeEvent" msprop:Generator_RowClassName="VVentaListaRow">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Especie" msprop:Generator_ColumnVarNameInTable="columnEspecie" msprop:Generator_ColumnPropNameInRow="Especie" msprop:Generator_ColumnPropNameInTable="EspecieColumn" msprop:Generator_UserColumnName="Especie" minOccurs="0">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="50" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="Peso" msprop:Generator_ColumnVarNameInTable="columnPeso" msprop:Generator_ColumnPropNameInRow="Peso" msprop:Generator_ColumnPropNameInTable="PesoColumn" msprop:Generator_UserColumnName="Peso" type="xs:decimal" minOccurs="0" />
+              <xs:element name="Precio" msprop:Generator_ColumnVarNameInTable="columnPrecio" msprop:Generator_ColumnPropNameInRow="Precio" msprop:Generator_ColumnPropNameInTable="PrecioColumn" msprop:Generator_UserColumnName="Precio" type="xs:decimal" minOccurs="0" />
+              <xs:element name="TotalReal" msprop:Generator_ColumnVarNameInTable="columnTotalReal" msprop:Generator_ColumnPropNameInRow="TotalReal" msprop:Generator_ColumnPropNameInTable="TotalRealColumn" msprop:Generator_UserColumnName="TotalReal" type="xs:decimal" minOccurs="0" />
+              <xs:element name="TotalCancelado" msprop:Generator_ColumnVarNameInTable="columnTotalCancelado" msprop:Generator_ColumnPropNameInRow="TotalCancelado" msprop:Generator_ColumnPropNameInTable="TotalCanceladoColumn" msprop:Generator_UserColumnName="TotalCancelado" type="xs:decimal" minOccurs="0" />
+              <xs:element name="Recargo" msprop:Generator_ColumnVarNameInTable="columnRecargo" msprop:Generator_ColumnPropNameInRow="Recargo" msprop:Generator_ColumnPropNameInTable="RecargoColumn" msprop:Generator_UserColumnName="Recargo" type="xs:decimal" minOccurs="0" />
+              <xs:element name="TipoPago" msprop:Generator_ColumnVarNameInTable="columnTipoPago" msprop:Generator_ColumnPropNameInRow="TipoPago" msprop:Generator_ColumnPropNameInTable="TipoPagoColumn" msprop:Generator_UserColumnName="TipoPago" minOccurs="0">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="50" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="PVenta" msprop:Generator_ColumnVarNameInTable="columnPVenta" msprop:Generator_ColumnPropNameInRow="PVenta" msprop:Generator_ColumnPropNameInTable="PVentaColumn" msprop:Generator_UserColumnName="PVenta" type="xs:decimal" minOccurs="0" />
+              <xs:element name="Reserva" msprop:Generator_ColumnVarNameInTable="columnReserva" msprop:Generator_ColumnPropNameInRow="Reserva" msprop:Generator_ColumnPropNameInTable="ReservaColumn" msprop:Generator_UserColumnName="Reserva" type="xs:boolean" minOccurs="0" />
+              <xs:element name="idCliente" msprop:Generator_ColumnVarNameInTable="columnidCliente" msprop:Generator_ColumnPropNameInRow="idCliente" msprop:Generator_ColumnPropNameInTable="idClienteColumn" msprop:Generator_UserColumnName="idCliente" type="xs:int" minOccurs="0" />
+              <xs:element name="Cliente" msprop:Generator_ColumnVarNameInTable="columnCliente" msprop:Generator_ColumnPropNameInRow="Cliente" msprop:Generator_ColumnPropNameInTable="ClienteColumn" msprop:Generator_UserColumnName="Cliente" minOccurs="0">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="50" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="idEspecie" msprop:Generator_ColumnVarNameInTable="columnidEspecie" msprop:Generator_ColumnPropNameInRow="idEspecie" msprop:Generator_ColumnPropNameInTable="idEspecieColumn" msprop:Generator_UserColumnName="idEspecie" type="xs:int" minOccurs="0" />
+              <xs:element name="idVenta" msprop:Generator_ColumnVarNameInTable="columnidVenta" msprop:Generator_ColumnPropNameInRow="idVenta" msprop:Generator_ColumnPropNameInTable="idVentaColumn" msprop:Generator_UserColumnName="idVenta" type="xs:int" />
+              <xs:element name="idVendedor" msprop:Generator_ColumnVarNameInTable="columnidVendedor" msprop:Generator_ColumnPropNameInRow="idVendedor" msprop:Generator_ColumnPropNameInTable="idVendedorColumn" msprop:Generator_UserColumnName="idVendedor" type="xs:int" minOccurs="0" />
+              <xs:element name="idUsuario" msprop:Generator_ColumnVarNameInTable="columnidUsuario" msprop:Generator_ColumnPropNameInRow="idUsuario" msprop:Generator_ColumnPropNameInTable="idUsuarioColumn" msprop:Generator_UserColumnName="idUsuario" minOccurs="0">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="50" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="Fecha" msprop:Generator_ColumnVarNameInTable="columnFecha" msprop:Generator_ColumnPropNameInRow="Fecha" msprop:Generator_ColumnPropNameInTable="FechaColumn" msprop:Generator_UserColumnName="Fecha" type="xs:dateTime" minOccurs="0" />
+              <xs:element name="Categoria" msprop:Generator_ColumnVarNameInTable="columnCategoria" msprop:Generator_ColumnPropNameInRow="Categoria" msprop:Generator_ColumnPropNameInTable="CategoriaColumn" msprop:Generator_UserColumnName="Categoria" minOccurs="0">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="50" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="Comision" msprop:Generator_ColumnVarNameInTable="columnComision" msprop:Generator_ColumnPropNameInRow="Comision" msprop:Generator_ColumnPropNameInTable="ComisionColumn" msprop:Generator_UserColumnName="Comision" type="xs:decimal" minOccurs="0" />
+              <xs:element name="NTicket" msprop:Generator_ColumnVarNameInTable="columnNTicket" msprop:Generator_ColumnPropNameInRow="NTicket" msprop:Generator_ColumnPropNameInTable="NTicketColumn" msprop:Generator_UserColumnName="NTicket" minOccurs="0">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="50" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+    <xs:unique name="Constraint1" msdata:PrimaryKey="true">
+      <xs:selector xpath=".//mstns:VVentaLista" />
+      <xs:field xpath="mstns:idVenta" />
+    </xs:unique>
+  </xs:element>
+</xs:schema>
