@@ -465,6 +465,12 @@
     <Compile Include="FSubCategoria.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FVerificarActualizacion.Designer.vb">
+      <DependentUpon>FVerificarActualizacion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="FVerificarActualizacion.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="GmailOAuth.vb" />
     <Compile Include="MConexion.vb" />
     <Compile Include="MGeneral.vb" />
@@ -615,6 +621,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FSubCategoria.resx">
       <DependentUpon>FSubCategoria.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FVerificarActualizacion.resx">
+      <DependentUpon>FVerificarActualizacion.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>

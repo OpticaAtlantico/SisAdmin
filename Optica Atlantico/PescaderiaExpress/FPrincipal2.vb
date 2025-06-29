@@ -16,17 +16,24 @@ Public Class FPrincipal2
     End Sub
 
     Private Sub FPrincipal2_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        Dim miVersion As String = "1.0.0.17" ' ← versión actual de tu app
+        Dim miVersion As String = "1.2.0"
         Dim verOnline As String = "", url As String = "", notas As String = ""
 
         If VerificadorActualizacion.HayNuevaVersion(miVersion, verOnline, url, notas) Then
-            Dim msg As String = $"Hay una nueva versión disponible: v{verOnline}.{vbCrLf}{vbCrLf}¿Deseas descargarla ahora?" &
-                                $"{vbCrLf}{vbCrLf}Novedades:{vbCrLf}{notas}"
+            Dim form As New FVerificarActualizacion With {
+            .VersionActual = miVersion,
+            .VersionNueva = verOnline,
+            .URLDescarga = url,
+            .Notas = notas
+        }
 
-            If MessageBox.Show(msg, "Actualización disponible", MessageBoxButtons.YesNo, MessageBoxIcon.Information) = DialogResult.Yes Then
-                Process.Start(url)
-                Application.Exit()
-            End If
+            form.ShowDialog()
+
+            ' Puedes cerrar la app si deseas evitar que continúe con versión anterior:
+            Application.Exit()
+            Return
         End If
+
+        ' Si no hay nueva versión, continúa con la lógica normal de carga
     End Sub
 End Class
