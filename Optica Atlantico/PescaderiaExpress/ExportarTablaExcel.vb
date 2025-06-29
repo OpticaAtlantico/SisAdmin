@@ -104,7 +104,7 @@ Public Class ExportarTablaExcel
             End If
         Next
 
-        ' Unir y vaciar productos repetidos.
+        ' Unir y vaciar productos repetidos
         Dim ordenesProcesadas As New HashSet(Of String)
 
         For Each rowPago As DataRow In dtPagos.Rows
@@ -165,8 +165,12 @@ Public Class ExportarTablaExcel
         xlLibro.SaveAs(rutaFinal)
         xlApp.Visible = True
     End Sub
+
+
 End Class
 
+'Atlantico: nfry whmy hwlk hfnn
+'Optica-Atlantico: qbhz pvom mlwc etul
 
 
 

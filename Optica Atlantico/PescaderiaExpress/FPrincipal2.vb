@@ -15,4 +15,18 @@ Public Class FPrincipal2
         FReporteSemanal.ShowDialog()
     End Sub
 
+    Private Sub FPrincipal2_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Dim miVersion As String = "1.0.0.17" ' ← versión actual de tu app
+        Dim verOnline As String = "", url As String = "", notas As String = ""
+
+        If VerificadorActualizacion.HayNuevaVersion(miVersion, verOnline, url, notas) Then
+            Dim msg As String = $"Hay una nueva versión disponible: v{verOnline}.{vbCrLf}{vbCrLf}¿Deseas descargarla ahora?" &
+                                $"{vbCrLf}{vbCrLf}Novedades:{vbCrLf}{notas}"
+
+            If MessageBox.Show(msg, "Actualización disponible", MessageBoxButtons.YesNo, MessageBoxIcon.Information) = DialogResult.Yes Then
+                Process.Start(url)
+                Application.Exit()
+            End If
+        End If
+    End Sub
 End Class

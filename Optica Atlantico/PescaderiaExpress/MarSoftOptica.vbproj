@@ -510,6 +510,7 @@
       <DependentUpon>CRVentasxEmpleado.rpt</DependentUpon>
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="VerificadorActualizacion.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FBuscarClienteEmpleado.resx">
