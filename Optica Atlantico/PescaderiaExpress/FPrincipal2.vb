@@ -16,23 +16,24 @@ Public Class FPrincipal2
     End Sub
 
     Private Sub FPrincipal2_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        Dim miVersion As String = "1.2.0"
-        Dim verOnline As String = "", url As String = "", notas As String = ""
+        'Dim miVersion As String = FileVersionInfo.GetVersionInfo(rutaExe).ProductVersion
 
-        If VerificadorActualizacion.HayNuevaVersion(miVersion, verOnline, url, notas) Then
-            Dim form As New FVerificarActualizacion With {
-            .VersionActual = miVersion,
-            .VersionNueva = verOnline,
-            .URLDescarga = url,
-            .Notas = notas
-        }
+        'Dim verOnline As String = "", url As String = "", notas As String = ""
 
-            form.ShowDialog()
+        'If VerificadorActualizacion.HayNuevaVersion(miVersion, verOnline, url, notas) Then
+        '    Dim form As New FVerificarActualizacion With {
+        '    .VersionActual = miVersion,
+        '    .VersionNueva = verOnline,
+        '    .URLDescarga = url,
+        '    .Notas = notas
+        '}
 
-            ' Puedes cerrar la app si deseas evitar que continúe con versión anterior:
-            Application.Exit()
-            Return
-        End If
+        '    form.ShowDialog()
+
+        '    ' Puedes cerrar la app si deseas evitar que continúe con versión anterior:
+        '    'Application.Exit()
+        '    Return
+        'End If
 
         ' Si no hay nueva versión, continúa con la lógica normal de carga
     End Sub

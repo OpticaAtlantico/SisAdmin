@@ -111,7 +111,7 @@ Partial Class FVerificarActualizacion
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(550, 290)
+        Me.ClientSize = New System.Drawing.Size(482, 290)
         Me.Controls.Add(Me.lblVersionActual)
         Me.Controls.Add(Me.lblVersionDisponible)
         Me.Controls.Add(Me.rtxNotas)
