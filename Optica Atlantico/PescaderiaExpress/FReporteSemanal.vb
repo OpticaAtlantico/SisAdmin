@@ -188,7 +188,7 @@ Public Class FReporteSemanal
 
         With Me.dgv_TipoPagos
 
-            .Columns(0).HeaderText = "Tipo de Pago" : .Columns(0).Width = 130
+            .Columns(0).HeaderText = "Tipo de Pago" : .Columns(0).Width = 180
             .Columns(1).HeaderText = "Cantidad" : .Columns(1).Width = 80 : .Columns(1).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             .Columns(2).HeaderText = "Monto" : .Columns(2).Width = 100 : .Columns(2).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
 
@@ -198,7 +198,7 @@ Public Class FReporteSemanal
 
         With Me.dgv_Conceptos
 
-            .Columns(0).HeaderText = "Concepto" : .Columns(0).Width = 110
+            .Columns(0).HeaderText = "Concepto" : .Columns(0).Width = 180
             .Columns(1).HeaderText = "Cantidad" : .Columns(1).Width = 80 : .Columns(1).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             .Columns(2).HeaderText = "Monto" : .Columns(2).Width = 100 : .Columns(2).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
 
@@ -208,7 +208,7 @@ Public Class FReporteSemanal
 
         With Me.dgv_Totales
 
-            .Columns(0).HeaderText = "Concepto" : .Columns(0).Width = 150
+            .Columns(0).HeaderText = "Concepto" : .Columns(0).Width = 180
             .Columns(1).HeaderText = "Cantidad" : .Columns(1).Width = 80 : .Columns(1).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             .Columns(2).HeaderText = "Monto" : .Columns(2).Width = 100 : .Columns(2).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
 
