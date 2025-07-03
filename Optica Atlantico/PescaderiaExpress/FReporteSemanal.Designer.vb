@@ -339,7 +339,7 @@ Partial Class FReporteSemanal
         Me.Panel6.Dock = System.Windows.Forms.DockStyle.Fill
         Me.Panel6.Location = New System.Drawing.Point(0, 0)
         Me.Panel6.Name = "Panel6"
-        Me.Panel6.Size = New System.Drawing.Size(1025, 610)
+        Me.Panel6.Size = New System.Drawing.Size(984, 610)
         Me.Panel6.TabIndex = 2
         '
         'dgv_Datos
@@ -386,7 +386,7 @@ Partial Class FReporteSemanal
         Me.dgv_Datos.RowHeadersVisible = False
         Me.dgv_Datos.RowTemplate.DefaultCellStyle.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.dgv_Datos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect
-        Me.dgv_Datos.Size = New System.Drawing.Size(1025, 610)
+        Me.dgv_Datos.Size = New System.Drawing.Size(984, 610)
         Me.dgv_Datos.TabIndex = 0
         '
         'Panel15
@@ -395,9 +395,9 @@ Partial Class FReporteSemanal
         Me.Panel15.Controls.Add(Me.Panel2)
         Me.Panel15.Controls.Add(Me.Panel5)
         Me.Panel15.Dock = System.Windows.Forms.DockStyle.Right
-        Me.Panel15.Location = New System.Drawing.Point(1025, 0)
+        Me.Panel15.Location = New System.Drawing.Point(984, 0)
         Me.Panel15.Name = "Panel15"
-        Me.Panel15.Size = New System.Drawing.Size(336, 610)
+        Me.Panel15.Size = New System.Drawing.Size(377, 610)
         Me.Panel15.TabIndex = 1
         '
         'Panel3
@@ -406,7 +406,7 @@ Partial Class FReporteSemanal
         Me.Panel3.Dock = System.Windows.Forms.DockStyle.Fill
         Me.Panel3.Location = New System.Drawing.Point(0, 230)
         Me.Panel3.Name = "Panel3"
-        Me.Panel3.Size = New System.Drawing.Size(336, 176)
+        Me.Panel3.Size = New System.Drawing.Size(377, 176)
         Me.Panel3.TabIndex = 2
         '
         'dgv_Conceptos
@@ -442,7 +442,7 @@ Partial Class FReporteSemanal
         Me.dgv_Conceptos.ReadOnly = True
         Me.dgv_Conceptos.RowHeadersVisible = False
         Me.dgv_Conceptos.RowTemplate.DefaultCellStyle.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.dgv_Conceptos.Size = New System.Drawing.Size(336, 176)
+        Me.dgv_Conceptos.Size = New System.Drawing.Size(377, 176)
         Me.dgv_Conceptos.TabIndex = 0
         '
         'Panel2
@@ -451,7 +451,7 @@ Partial Class FReporteSemanal
         Me.Panel2.Dock = System.Windows.Forms.DockStyle.Bottom
         Me.Panel2.Location = New System.Drawing.Point(0, 406)
         Me.Panel2.Name = "Panel2"
-        Me.Panel2.Size = New System.Drawing.Size(336, 204)
+        Me.Panel2.Size = New System.Drawing.Size(377, 204)
         Me.Panel2.TabIndex = 2
         '
         'dgv_Totales
@@ -487,7 +487,7 @@ Partial Class FReporteSemanal
         Me.dgv_Totales.ReadOnly = True
         Me.dgv_Totales.RowHeadersVisible = False
         Me.dgv_Totales.RowTemplate.DefaultCellStyle.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.dgv_Totales.Size = New System.Drawing.Size(336, 204)
+        Me.dgv_Totales.Size = New System.Drawing.Size(377, 204)
         Me.dgv_Totales.TabIndex = 0
         '
         'Panel5
@@ -496,7 +496,7 @@ Partial Class FReporteSemanal
         Me.Panel5.Dock = System.Windows.Forms.DockStyle.Top
         Me.Panel5.Location = New System.Drawing.Point(0, 0)
         Me.Panel5.Name = "Panel5"
-        Me.Panel5.Size = New System.Drawing.Size(336, 230)
+        Me.Panel5.Size = New System.Drawing.Size(377, 230)
         Me.Panel5.TabIndex = 2
         '
         'dgv_TipoPagos
@@ -526,7 +526,7 @@ Partial Class FReporteSemanal
         Me.dgv_TipoPagos.ReadOnly = True
         Me.dgv_TipoPagos.RowHeadersVisible = False
         Me.dgv_TipoPagos.RowTemplate.DefaultCellStyle.Font = New System.Drawing.Font("Segoe UI", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.dgv_TipoPagos.Size = New System.Drawing.Size(336, 230)
+        Me.dgv_TipoPagos.Size = New System.Drawing.Size(377, 230)
         Me.dgv_TipoPagos.TabIndex = 0
         '
         'FReporteSemanal
