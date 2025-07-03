@@ -3,34 +3,57 @@ GO
 
 --ELIMINAR TODOS LOS PROCEDIMIENTO, VISTAS Y TABLAS
 
-DROP TABLE IF EXISTS dbo.PagosConConceptoMaterializado;
+DROP TABLE IF EXISTS dbo.PagosConConceptoMaterializado; 
+GO
 
-DROP VIEW IF EXISTS vwHistorialFinancieroCliente0;
-DROP VIEW IF EXISTS vwHistorialFinancieroCliente1;
-DROP VIEW IF EXISTS vwProductosPorOrden;
-DROP VIEW IF EXISTS vwProductosPorOrdenDesglosado;
-DROP VIEW IF EXISTS vwReportePagosDetallado0;
-DROP VIEW IF EXISTS vwReportePagosDetallado1;
-DROP VIEW IF EXISTS vwReporteVentaCompleta;
-DROP VIEW IF EXISTS vwResumenMovimientosCaja;
-DROP VIEW IF EXISTS vwResumenVentasFinanciero;
+DROP VIEW IF EXISTS vwHistorialFinancieroCliente0; 
+GO
+DROP VIEW IF EXISTS vwHistorialFinancieroCliente1; 
+GO
+DROP VIEW IF EXISTS vwProductosPorOrden; 
+GO
+DROP VIEW IF EXISTS vwProductosPorOrdenDesglosado; 
+GO
+DROP VIEW IF EXISTS vwReportePagosDetallado0; 
+GO
+DROP VIEW IF EXISTS vwReportePagosDetallado1; 
+GO
+DROP VIEW IF EXISTS vwReporteVentaCompleta; 
+GO
+DROP VIEW IF EXISTS vwResumenMovimientosCaja; 
+GO
+DROP VIEW IF EXISTS vwResumenVentasFinanciero; 
+GO
 
-DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto
-DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas0
-DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas1
-DROP PROCEDURE IF EXISTS dbo.PReporte_Empleados
-DROP PROCEDURE IF EXISTS dbo.PReporte_PagosConProductos
-DROP PROCEDURE IF EXISTS dbo.PReporte_Productos
-DROP PROCEDURE IF EXISTS dbo.PReporte_ResumenFinanciero
-DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal0
-DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal1
-DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos0
-DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos1
-DROP PROCEDURE IF EXISTS dbo.RefrescarPagosConConcepto
+DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas0; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas1; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Empleados; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_PagosConProductos; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Productos; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_ResumenFinanciero; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal0; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal1; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos0; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos1; 
+GO
+DROP PROCEDURE IF EXISTS dbo.RefrescarPagosConConcepto; 
+GO
 
-DROP FUNCTION IF EXISTS dbo.fn_CalcularConceptoPago;
-DROP FUNCTION IF EXISTS dbo.fnPagosConConcepto;
-
+DROP FUNCTION IF EXISTS dbo.fn_CalcularConceptoPago; 
+GO
+DROP FUNCTION IF EXISTS dbo.fnPagosConConcepto; 
+GO
 
 ------------TABLA 
 
@@ -138,10 +161,10 @@ OUTER APPLY (
     INNER JOIN TProducto P ON D.idProducto = P.idProducto
     WHERE D.idOrden = O.idOrden AND P.idCategoria IN (4,5,6)
 ) AS XD;
+
 GO
 
 ------------------------------------------------------------------------------------------
-
 
 CREATE OR ALTER VIEW vwProductosPorOrdenDesglosado AS
 SELECT 
@@ -399,8 +422,6 @@ LEFT JOIN PagosAcumulados PA ON RPD.idOrden = PA.idOrden AND RPD.NumPago = PA.Nu
 
 GO
 -----------------------------------------------------------------------------------------
-
-
 
 
 /* =======================================================
