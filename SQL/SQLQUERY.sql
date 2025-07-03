@@ -1,6 +1,37 @@
 ﻿USE BDOptica2 
 GO
 
+--ELIMINAR TODOS LOS PROCEDIMIENTO, VISTAS Y TABLAS
+
+DROP TABLE IF EXISTS dbo.PagosConConceptoMaterializado;
+
+DROP VIEW IF EXISTS vwHistorialFinancieroCliente0;
+DROP VIEW IF EXISTS vwHistorialFinancieroCliente1;
+DROP VIEW IF EXISTS vwProductosPorOrden;
+DROP VIEW IF EXISTS vwProductosPorOrdenDesglosado;
+DROP VIEW IF EXISTS vwReportePagosDetallado0;
+DROP VIEW IF EXISTS vwReportePagosDetallado1;
+DROP VIEW IF EXISTS vwReporteVentaCompleta;
+DROP VIEW IF EXISTS vwResumenMovimientosCaja;
+DROP VIEW IF EXISTS vwResumenVentasFinanciero;
+
+DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto
+DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas0
+DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas1
+DROP PROCEDURE IF EXISTS dbo.PReporte_Empleados
+DROP PROCEDURE IF EXISTS dbo.PReporte_PagosConProductos
+DROP PROCEDURE IF EXISTS dbo.PReporte_Productos
+DROP PROCEDURE IF EXISTS dbo.PReporte_ResumenFinanciero
+DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal0
+DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal1
+DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos0
+DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos1
+DROP PROCEDURE IF EXISTS dbo.RefrescarPagosConConcepto
+
+DROP FUNCTION IF EXISTS dbo.fn_CalcularConceptoPago;
+DROP FUNCTION IF EXISTS dbo.fnPagosConConcepto;
+
+
 ------------TABLA 
 
 IF NOT EXISTS (
