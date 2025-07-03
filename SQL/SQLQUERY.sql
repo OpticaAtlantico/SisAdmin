@@ -797,7 +797,7 @@ BEGIN
 
       UNION ALL
 
-    -- 4. Apartado vigente (sin venta ni retiro en toda la base de datos sin fecha periodo)
+    -- 5. Apartado real (sin venta ni retiro en toda la base de datos con fecha periodo)
     SELECT 'Apartado Real' AS Categoria,
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
@@ -810,7 +810,7 @@ BEGIN
 
     UNION ALL
 
-    -- 5. Orden completada y retirada (retiro directo)
+    -- 6. Orden completada y retirada (retiro directo)
     SELECT 'Orden completada y retirada' AS Categoria,
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
@@ -820,7 +820,7 @@ BEGIN
 
     UNION ALL
 
-    -- 6. Venta (Crédito)
+    -- 7. Venta (Crédito)
     SELECT 'Venta (Crédito)' AS Categoria,
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
@@ -830,7 +830,7 @@ BEGIN
 
     UNION ALL
 
-    -- 7. Apartados no concretados con 2 pagos y sin venta ni retiro
+    -- 8. Apartados no concretados con 2 pagos y sin venta ni retiro
     SELECT 'Apartado no completado (2 pagos)' AS Categoria,
            COUNT(*) AS TotalOrdenes,
            SUM(Total) AS MontoTotal
@@ -897,13 +897,26 @@ Apartados que **nunca fueron completados** como venta ni retiro. Se listan sin i
 > **¿Cómo se identifica?**  
 - Tiene uno o más `'Apartado'`.
 - **No** tiene `'Venta'` ni `'Retiro'` asociados.
+- Si se filtra por fecha.
+
+> 🧾 Ejemplo: “Reservé un producto... y nunca más volví”.
+
+---
+
+### 🔹 5. **Apartado real (fecha periodo)**
+> **¿Qué representa?**  
+Apartados que **nunca fueron completados** como venta ni retiro. Se listan con la fecha periodo, ya que pueden estar olvidados, vencidos o en espera.
+
+> **¿Cómo se identifica?**  
+- Tiene uno o más `'Apartado'`.
+- **No** tiene `'Venta'` ni `'Retiro'` asociados.
 - No se filtra por fecha: muestra el histórico total.
 
 > 🧾 Ejemplo: “Reservé un producto... y nunca más volví”.
 
 ---
 
-### 🔹 5. **Orden completada y retirada (retiro directo)**
+### 🔹 6. **Orden completada y retirada (retiro directo)**
 > **¿Qué representa?**  
 Casos en los que el producto fue retirado, independientemente de si fue venta directa o tras un apartado.
 
@@ -914,7 +927,7 @@ Casos en los que el producto fue retirado, independientemente de si fue venta di
 
 ---
 
-### 🔹 6. **Venta (Crédito)**
+### 🔹 7. **Venta (Crédito)**
 > **¿Qué representa?**  
 Ventas registradas como concepto `'Venta'` dentro del período solicitado. A diferencia del “Contado”, esta categoría **sí puede incluir ventas que se originaron desde apartados o abonos**.
 
@@ -927,7 +940,7 @@ Ventas registradas como concepto `'Venta'` dentro del período solicitado. A dif
 
 ---
 
-### 🔹 7. **Apartado no completado (2 pagos)**
+### 🔹 8. **Apartado no completado (2 pagos)**
 > **¿Qué representa?**  
 Apartados que tuvieron **exactamente 2 pagos** (quizás en cuotas), pero **no se concretaron como venta ni hubo retiro**.
 
@@ -938,11 +951,6 @@ Apartados que tuvieron **exactamente 2 pagos** (quizás en cuotas), pero **no se
 > 🧾 Ejemplo: “Reservé el producto, hice dos pagos, pero jamás finalicé la compra”.
 
 ---
-
-### 🔍 Sugerencia adicional
-Para mejorar la trazabilidad, podrías considerar una columna adicional con el porcentaje de avance del cliente en el ciclo (por ejemplo, "50%" si llegó hasta Venta pero no Retiro). Si te interesa, puedo ayudarte a implementarlo.
-
-¿Quieres que te lo presente también en forma de tabla resumen visual? O incluso integrarlo a un dashboard en Excel o Power BI si estás cruzando con más datos. ¡Tú dime!
 
 */
 
