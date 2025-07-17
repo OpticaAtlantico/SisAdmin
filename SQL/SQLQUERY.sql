@@ -348,6 +348,8 @@ LEFT JOIN TEmpleado EO ON EO.idEmpleado = P.idOpto
 LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing;
 
 GO
+
+
 ------------------------------------------------------------------------------------------
 
 
@@ -1115,10 +1117,12 @@ BEGIN
 			P.Gerente,
 			P.Marketing 
 		FROM dbo.vwReportePagosDetallado0 P
-		WHERE P.Fecha_Abono BETWEEN @FechaIni and @FechaFin
+		WHERE P.Fecha_Abono BETWEEN @FechaIni and @FechaFin AND P.Marketing <> '' --Se le coloco >1 para diferenciar la  movil de la optica 
 		ORDER BY P.idOrden;
 
 END
+
+--EXEC PReporte_Semanal1 '01/01/2025','30/07/2025'; dbo.RefrescarPagosConConcepto
 
 GO
 
@@ -1146,7 +1150,7 @@ BEGIN
 			P.Gerente,
 			P.Marketing 
 		FROM dbo.vwReportePagosDetallado1 P
-		WHERE P.Fecha_Abono BETWEEN @FechaIni and @FechaFin
+		WHERE P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing = ''  --Se le coloco <= 1 para diferenciar la optica  de la movil
 		ORDER BY P.idOrden;
 
 END

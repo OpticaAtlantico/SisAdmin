@@ -71,7 +71,9 @@ Public Class FReporteSemanal
     End Sub
 
     Private Sub FReporteSemanal_Load(sender As Object, e As EventArgs) Handles Me.Load
-        NumOptica = ObtenerNombreOptica(1)
+        'NumOptica = ObtenerNombreOptica(1)
+        'CargarDatos(NumOptica)
+        VerificarOptica()
         CargarDatos(NumOptica)
         CargarFechas()
         LimpiarDatagrid()
@@ -79,6 +81,14 @@ Public Class FReporteSemanal
         bgWorker.WorkerSupportsCancellation = False
         bgWorker1.WorkerReportsProgress = True
         bgWorker1.WorkerSupportsCancellation = False
+    End Sub
+
+    Private Sub VerificarOptica()
+        If Me.chkOpcion.Checked = True Then
+            NumOptica = 0
+        Else
+            NumOptica = 1
+        End If
     End Sub
 
     Sub LimpiarDatagrid()
@@ -257,11 +267,11 @@ Public Class FReporteSemanal
                         Invoke(Sub()
                                    ' Cargar datos aquí
                                    Select Case NumOptica
-                                       Case 0
+                                       Case 0 'Para la movil
                                            dtDatos = BuscarDatos("PReporte_Semanal0")
                                            dtTipoPago = BuscarDatos("PReporte_TipoPagos0")
                                            dtTotales = BuscarDatos("PReporte_ConceptoTotalVentasMejorado0")
-                                       Case 1
+                                       Case 1 'Para la optica
                                            dtDatos = BuscarDatos("PReporte_Semanal1")
                                            dtTipoPago = BuscarDatos("PReporte_TipoPagos1")
                                            dtTotales = BuscarDatos("PReporte_ConceptoTotalVentasMejorado1")
@@ -395,4 +405,8 @@ Public Class FReporteSemanal
         End If
     End Sub
 
+    Private Sub chkOpcion_CheckedChanged(sender As Object, e As EventArgs) Handles chkOpcion.CheckedChanged
+        VerificarOptica()
+        CargarDatos(NumOptica)
+    End Sub
 End Class
