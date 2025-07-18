@@ -609,14 +609,16 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Venta'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> ''
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Apartado', 'Abono', 'Retiro')
+          AND X.Marketing <> '' 
       )
       AND (
-          SELECT COUNT(*) FROM vwReportePagosDetallado0 X
-          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+          SELECT COUNT(*) FROM vwReportePagosDetallado0 Y
+          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Venta' 
+          AND Y.Marketing <> ''
       ) = 1
 
     UNION ALL
@@ -627,14 +629,16 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Apartado'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin Marketing <> ''
       AND EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+          AND X.Marketing <> ''
       )
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 Y
           WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
+          AND Y.Marketing <> ''
       )
 
     UNION ALL
@@ -644,14 +648,16 @@ BEGIN
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Apartado'
+    WHERE P.Concepto = 'Apartado' AND P.Marketing <> ''
       AND EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+          AND X.Marketing <> ''
       )
       AND EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 Y
           WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
+          AND Y.Marketing <> ''
       )
 
     UNION ALL
@@ -662,10 +668,11 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Apartado'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> ''
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+          AND X.Marketing <> ''
       )
 
       UNION ALL
@@ -675,10 +682,11 @@ BEGIN
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Apartado'
+    WHERE P.Concepto = 'Apartado' AND P .Marketing <> ''
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+          AND X.Marketing <> ''
       )
 
     UNION ALL
@@ -689,7 +697,7 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Retiro'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> ''
 
     UNION ALL
 
@@ -699,7 +707,7 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Venta'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> ''
 
     UNION ALL
 
@@ -708,15 +716,16 @@ BEGIN
            COUNT(*) AS TotalOrdenes,
            SUM(Total) AS MontoTotal
     FROM (
-        SELECT idOrden, SUM(Total) AS Total
-        FROM vwReportePagosDetallado0
-        WHERE Concepto = 'Apartado'
-        GROUP BY idOrden
+        SELECT P.idOrden, SUM(P.Total) AS Total
+        FROM vwReportePagosDetallado0 P
+        WHERE Concepto = 'Apartado'  AND P.Marketing <> ''
+        GROUP BY P.idOrden
         HAVING COUNT(*) = 2
            AND NOT EXISTS (
-               SELECT 1 FROM vwReportePagosDetallado0
-               WHERE idOrden = vwReportePagosDetallado0.idOrden
+               SELECT 1 FROM vwReportePagosDetallado0 X
+               WHERE X.idOrden = vwReportePagosDetallado0.idOrden
                  AND Concepto IN ('Venta', 'Retiro')
+                 AND X.Marketing <> ''
            )
     ) AS P
 
@@ -1178,7 +1187,7 @@ BEGIN
 			COUNT(*) AS CantidadMovimientos,
 			SUM(P.Monto) AS TotalPorTipoPago
 		FROM vwReportePagosDetallado0 P
-		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin
+		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> '' 
 		GROUP BY P.TipoPago
 
 END
@@ -1197,7 +1206,7 @@ BEGIN
 			COUNT(*) AS CantidadMovimientos,
 			SUM(P.Monto) AS TotalPorTipoPago
 		FROM vwReportePagosDetallado1 P
-		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin
+		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin AND P.Marketing = ''
 		GROUP BY P.TipoPago
 
 END
