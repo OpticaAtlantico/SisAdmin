@@ -1,4 +1,26 @@
-﻿USE BDOptica2 
+﻿--ACTUALIZACIÓN EL DIA 18/072025
+--SE MODIFICARON LOS PROCEDIMIENTOS 
+
+--       vwReportePagosDetallado1
+--       vwReportePagosDetallado0
+
+--      dbo.PReporte_Concepto0 Y SE CREO dbo.PReporte_Concepto1 PARA LAS OPTICAS
+
+--      .PReporte_Semanal0
+--      .PReporte_Semanal1
+
+--SE AGREGO UN CAMPO (Jornada) EN LA TABLA dbo.PagosConConceptoMaterializado PARA IDENTIFICAR LAS OPTICAS DE LAS MOVILES
+
+-- SE ACTUALIZO LA FUNCION dbo.fn_CalcularConceptoPago;  AGREGANDO DOS PARAMETROS "DESDE Y HASTA" PARA BUSCAR POR FECHA 
+-- PARA QUE NO SE ACUMULE TANTA INFOMACIÒN Y SEA DIFICIL DE LECTURA
+-- SE AGREGO DOS PARAMETROS AL PROCEDIMIENTO dbo.RefrescarPagosConConcepto;
+
+-- ACTUALIZAR EL CAMPO JORNADA CON 1 Y 0 DE ACUERDO SI EL IDMARKETING EN LA TABLA TORDEN ES MAYOR O IGUAL A 1
+-- 0 ES MOVIL Y 1 ES OPTICA
+
+
+
+USE BDOptica2 
 GO
 
 --ELIMINAR TODOS LOS PROCEDIMIENTO, VISTAS Y TABLAS
@@ -25,7 +47,9 @@ GO
 DROP VIEW IF EXISTS vwResumenVentasFinanciero; 
 GO
 
-DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto; 
+DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto0; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto1;
 GO
 DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas0; 
 GO
@@ -74,9 +98,31 @@ BEGIN
         Apartado DECIMAL(18,2),
 	    Modo INT,
 	    FechaPago DATETIME,
-	    FechaActualizacion DATETIME DEFAULT GETDATE()
+	    FechaActualizacion DATETIME DEFAULT GETDATE(),
+        Jornada INT NOT NULL
     );
 END
+
+GO
+
+--INSERTAR UN CAMPO Jornada en la tabla TFormaPago y cambiar todos los datos en la facturacion
+IF NOT EXISTS (
+		SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_NAME = 'TFormaPago' AND COLUMN_NAME = 'Jornada'
+	)
+	BEGIN
+		ALTER TABLE TFormaPago ADD Jornada INT;
+	END
+
+    -- ACTUALIZAR EL CAMPO JORNADA CON 1 Y 0 DE ACUERDO SI EL ID,ARKETING EN LA TABLA TORDEN ESSEA MAYOR O IGUAL A 1
+    -- 0 ES MOVIL Y 1 ES OPTICA
+    UPDATE D
+        SET D.Jornada = CASE 
+                         WHEN O.idMarketing = 1 THEN 1
+                         ELSE 0
+                      END
+        FROM TFormaPago D
+        INNER JOIN TOrden O ON D.idOrden = O.idOrden;
 
 GO
 -------------------VISTAS
@@ -244,8 +290,7 @@ WITH BasePagos AS (
     FROM TFormaPago F
     INNER JOIN TOrden O ON F.idOrden = O.idOrden
     INNER JOIN TTipoPago T ON F.idTipoPago = T.id
-    LEFT JOIN dbo.PagosConConceptoMaterializado PCM 
-        ON PCM.id = F.id AND PCM.Modo = 0  -- Cambia a 0 si deseas usar el umbral del 20%
+    LEFT JOIN dbo.PagosConConceptoMaterializado PCM ON PCM.id = F.id AND PCM.Modo = 0  -- Cambia a 0 si deseas usar el umbral del 20%
 ),
 PagosNumerados AS (
     SELECT *,
@@ -280,7 +325,10 @@ FROM PagosNumerados P
 LEFT JOIN TEmpleado EA ON EA.idEmpleado = P.idAsesor
 LEFT JOIN TEmpleado EG ON EG.idEmpleado = P.idGerente
 LEFT JOIN TEmpleado EO ON EO.idEmpleado = P.idOpto
-LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing;
+LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing
+WHERE P.idMarketing > 1;
+
+-- SELECT * FROM vwReportePagosDetallado0 
 
 GO
 
@@ -345,7 +393,8 @@ FROM PagosNumerados P
 LEFT JOIN TEmpleado EA ON EA.idEmpleado = P.idAsesor
 LEFT JOIN TEmpleado EG ON EG.idEmpleado = P.idGerente
 LEFT JOIN TEmpleado EO ON EO.idEmpleado = P.idOpto
-LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing;
+LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing
+WHERE P.idMarketing = 1;
 
 GO
 
@@ -421,6 +470,8 @@ SELECT
 FROM vwReportePagosDetallado1 RPD
 LEFT JOIN vwProductosPorOrden PPO ON RPD.idOrden = PPO.idOrden
 LEFT JOIN PagosAcumulados PA ON RPD.idOrden = PA.idOrden AND RPD.NumPago = PA.NumPago;
+
+-- SELECT * FROM vwReporteVentaCompleta
 
 GO
 -----------------------------------------------------------------------------------------
@@ -577,7 +628,7 @@ GO
 
    PROCEDIMIENTO PARA MOSTRAR LOS CONCEPTOS VENTAS, APARTADOS, RETIROS, ABONOS POR FECHA
    ======================================================= */
-CREATE OR ALTER PROCEDURE PReporte_Concepto
+CREATE OR ALTER PROCEDURE PReporte_Concepto0
 	@FechaIni DATETIME,
 	@FechaFin DATETIME
 AS
@@ -587,9 +638,28 @@ BEGIN
 			Concepto,
 			COUNT(*) AS TotalPagos,
 			SUM(Monto) AS MontoTotal
-		FROM dbo.PagosConConceptoMaterializado 
-		WHERE FechaPago BETWEEN @FechaIni AND @FechaFin
-		GROUP BY Concepto
+		FROM dbo.PagosConConceptoMaterializado P
+		WHERE P.FechaPago BETWEEN @FechaIni AND @FechaFin AND P.Modo = 0
+		GROUP BY P.Concepto
+		ORDER BY MontoTotal DESC;
+
+END
+
+GO
+
+CREATE OR ALTER PROCEDURE PReporte_Concepto1
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
+AS
+BEGIN
+
+		SELECT 
+			Concepto,
+			COUNT(*) AS TotalPagos,
+			SUM(Monto) AS MontoTotal
+		FROM dbo.PagosConConceptoMaterializado P
+		WHERE P.FechaPago BETWEEN @FechaIni AND @FechaFin AND P.Modo = 1
+		GROUP BY P.Concepto
 		ORDER BY MontoTotal DESC;
 
 END
@@ -609,16 +679,14 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Venta'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> ''
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Apartado', 'Abono', 'Retiro')
-          AND X.Marketing <> '' 
       )
       AND (
           SELECT COUNT(*) FROM vwReportePagosDetallado0 Y
           WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Venta' 
-          AND Y.Marketing <> ''
       ) = 1
 
     UNION ALL
@@ -629,16 +697,14 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Apartado'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin Marketing <> ''
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
       AND EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
-          AND X.Marketing <> ''
       )
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 Y
           WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
-          AND Y.Marketing <> ''
       )
 
     UNION ALL
@@ -648,16 +714,14 @@ BEGIN
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Apartado' AND P.Marketing <> ''
+    WHERE P.Concepto = 'Apartado'
       AND EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
-          AND X.Marketing <> ''
       )
       AND EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 Y
           WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
-          AND Y.Marketing <> ''
       )
 
     UNION ALL
@@ -668,11 +732,10 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Apartado'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> ''
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
-          AND X.Marketing <> ''
       )
 
       UNION ALL
@@ -682,11 +745,10 @@ BEGIN
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Apartado' AND P .Marketing <> ''
+    WHERE P.Concepto = 'Apartado'
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado0 X
           WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
-          AND X.Marketing <> ''
       )
 
     UNION ALL
@@ -697,7 +759,7 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Retiro'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> ''
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
 
     UNION ALL
 
@@ -707,7 +769,7 @@ BEGIN
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado0 P
     WHERE P.Concepto = 'Venta'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> ''
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
 
     UNION ALL
 
@@ -718,14 +780,13 @@ BEGIN
     FROM (
         SELECT P.idOrden, SUM(P.Total) AS Total
         FROM vwReportePagosDetallado0 P
-        WHERE Concepto = 'Apartado'  AND P.Marketing <> ''
+        WHERE Concepto = 'Apartado'
         GROUP BY P.idOrden
         HAVING COUNT(*) = 2
            AND NOT EXISTS (
-               SELECT 1 FROM vwReportePagosDetallado0 X
-               WHERE X.idOrden = vwReportePagosDetallado0.idOrden
+               SELECT 1 FROM vwReportePagosDetallado0
+               WHERE idOrden = vwReportePagosDetallado0.idOrden
                  AND Concepto IN ('Venta', 'Retiro')
-                 AND X.Marketing <> ''
            )
     ) AS P
 
@@ -1187,10 +1248,12 @@ BEGIN
 			COUNT(*) AS CantidadMovimientos,
 			SUM(P.Monto) AS TotalPorTipoPago
 		FROM vwReportePagosDetallado0 P
-		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin AND P.Marketing <> '' 
+		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin --AND P.Marketing <> '' 
 		GROUP BY P.TipoPago
 
 END
+
+
 
 GO
 
@@ -1206,7 +1269,7 @@ BEGIN
 			COUNT(*) AS CantidadMovimientos,
 			SUM(P.Monto) AS TotalPorTipoPago
 		FROM vwReportePagosDetallado1 P
-		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin AND P.Marketing = ''
+		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin --AND P.Marketing = ''
 		GROUP BY P.TipoPago
 
 END
@@ -1216,7 +1279,9 @@ GO
 
 ---PARA ACTUALIZAR LA TABLA CON LA INFORMACIÒN DE LAS TORDEN
 CREATE OR ALTER PROCEDURE dbo.RefrescarPagosConConcepto
-    @Modo INT
+    @Modo INT,
+    @Desde DATE,
+    @Hasta DATE
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1225,11 +1290,11 @@ BEGIN
 	TRUNCATE TABLE dbo.PagosConConceptoMaterializado
 
     INSERT INTO dbo.PagosConConceptoMaterializado (
-        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, Modo, FechaPago
+        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, Modo, FechaPago, Jornada
     )
     SELECT 
-        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, @Modo, FechaPago
-    FROM dbo.fnPagosConConcepto(@Modo);
+        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, @Modo, FechaPago, Jornada 
+    FROM dbo.fnPagosConConcepto(@Modo, @Desde, @Hasta)
 END;
 
 
@@ -1244,7 +1309,7 @@ GO
 	FUNCION [fnPagosConConcepto]
 
 */
-CREATE OR ALTER FUNCTION fnPagosConConcepto (@Modo INT)
+CREATE OR ALTER FUNCTION fnPagosConConcepto (@Modo INT, @Desde DATE, @Hasta DATE)
 RETURNS TABLE
 AS
 RETURN
@@ -1261,7 +1326,8 @@ WITH Porcentajes AS (
                 ORDER BY F.id  
                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
             ) * 100.0 / O.Total AS DECIMAL(5,2)
-        ) AS Porcentaje
+        ) AS Porcentaje,
+        F.Jornada 
     FROM TFormaPago F
     INNER JOIN TOrden O ON F.idOrden = O.idOrden
 ),
@@ -1271,7 +1337,7 @@ Umbrales AS (
 ),
 PagosPorOrden AS (
     SELECT idOrden, COUNT(*) AS TotalPagos
-    FROM Porcentajes
+    FROM Porcentajes P
     GROUP BY idOrden
 ),
 PrimeraVenta AS (
@@ -1317,12 +1383,16 @@ SELECT
             )
         ) THEN P.MontoPagar
         ELSE 0  
-    END AS Apartado
+    END AS Apartado,
+    P.Jornada
 FROM Porcentajes P
 CROSS JOIN Umbrales U
 LEFT JOIN PagosPorOrden PPO ON P.idOrden = PPO.idOrden
 LEFT JOIN PrimeraVenta PV ON P.idOrden = PV.idOrden
-LEFT JOIN MarcarVentaPorRetiroDirecto MVP ON P.idOrden = MVP.idOrden;
+LEFT JOIN MarcarVentaPorRetiroDirecto MVP ON P.idOrden = MVP.idOrden
+WHERE P.Jornada = @Modo AND P.FechaPago BETWEEN @Desde AND @Hasta;
+
+-- SELECT * FROM fnPagosConConcepto(1, '2025-05-01', '2025-12-31')
 
 GO
 -------------------------------------------------------------------------------------------

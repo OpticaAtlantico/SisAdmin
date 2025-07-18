@@ -35,12 +35,14 @@ Module modCargarDatos
         Return dtResultado.Rows.Count > 0
     End Function
 
-    Public Sub CargarDatos(NumOptica As Integer)
+    Public Sub CargarDatos(NumOptica As Integer, Desde As DateTime, Hasta As DateTime)
         Try
             If Conectar() Then
                 Using cmd As New SqlCommand("dbo.RefrescarPagosConConcepto", CNN)
                     cmd.CommandType = CommandType.StoredProcedure
                     cmd.Parameters.Add("@Modo", SqlDbType.Int).Value = NumOptica
+                    cmd.Parameters.Add("@Desde", SqlDbType.Date).Value = Desde
+                    cmd.Parameters.Add("@Hasta", SqlDbType.Date).Value = Hasta
                     cmd.ExecuteNonQuery()
                     Desconectar()
                 End Using

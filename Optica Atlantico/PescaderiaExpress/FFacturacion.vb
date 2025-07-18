@@ -303,7 +303,7 @@ Public Class FFacturacion
                 If (Me.COpto.Text <> "") Then
                     If (Me.CGerente.Text <> "") Then
                         ActulizarFacturacion()
-                        CargarDatos(ObtenerNombreOptica(1))
+                        'CargarDatos(ObtenerNombreOptica(1))
                     Else
                         MsgBox("Debe Seleccionar el Gerente o Sub-Gerente.", MsgBoxStyle.Information, "MarSoft: Información.")
                         Me.CGerente.Focus()
@@ -446,7 +446,7 @@ Public Class FFacturacion
                         If (Me.Grid.RowCount > 0) Then
                             '  If (DEsf <> "") Then
                             GuardarFacturacion()
-                            CargarDatos(ObtenerNombreOptica(1))
+                            'CargarDatos(ObtenerNombreOptica(1))
                             '  Else
                             '    MsgBox("Debe Agregar la «Formula» a la Orden. ", MsgBoxStyle.Information, "MarSoft: Información.")
                             '     Me.CGerente.Focus()
@@ -488,7 +488,7 @@ Public Class FFacturacion
                     Comando.Parameters.Add(New SqlParameter("@idOrden2", CodOrden))
                     DR = Comando.ExecuteReader()
                     DR.Close()
-                    CargarDatos(ObtenerNombreOptica(1))
+                    'CargarDatos(ObtenerNombreOptica(1))
                     Desconectar()
                     MsgBox("Los Datos Fueron «Eliminados» con Exito!!!", MsgBoxStyle.Information, "MarSoft: Información.")
                     Nuevo_Click(Nothing, Nothing)

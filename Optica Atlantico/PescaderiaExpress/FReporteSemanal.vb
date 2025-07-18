@@ -18,6 +18,10 @@ Public Class FReporteSemanal
     Private NumOptica As Integer
     Private nombreOptica As String = String.Empty
     Dim idOrden As Integer = 0
+
+    Dim Desde As DateTime
+    Dim Hasta As DateTime
+
     Public Property BackgroundWorker1 As Object
 
     'Private Sub btn_Imprimir_Click(sender As Object, e As EventArgs) Handles btn_Imprimir.Click
@@ -74,8 +78,8 @@ Public Class FReporteSemanal
         'NumOptica = ObtenerNombreOptica(1)
         'CargarDatos(NumOptica)
         VerificarOptica()
-        CargarDatos(NumOptica)
         CargarFechas()
+        CargarDatos(NumOptica, CDate(Desde), CDate(Hasta))
         LimpiarDatagrid()
         bgWorker.WorkerReportsProgress = True
         bgWorker.WorkerSupportsCancellation = False
@@ -230,8 +234,14 @@ Public Class FReporteSemanal
 
     Sub CargarFechas()
         With Me
-            .dtp_FechaInicial.Text = "01/01/2025"
-            .dtp_FechaFinal.Text = Date.Now()
+            Dim fechaReferencia As Date = DateAdd(DateInterval.Month, -3, DateTime.Now)
+            Dim fechaTexto As String = "01/" & fechaReferencia.Month.ToString("00") & "/2025"
+
+            .dtp_FechaInicial.Value = fechaTexto
+            .dtp_FechaFinal.Value = Date.Now()
+
+            Desde = .dtp_FechaInicial.Value
+            Hasta = .dtp_FechaFinal.Value
         End With
     End Sub
 
@@ -270,14 +280,15 @@ Public Class FReporteSemanal
                                        Case 0 'Para la movil
                                            dtDatos = BuscarDatos("PReporte_Semanal0")
                                            dtTipoPago = BuscarDatos("PReporte_TipoPagos0")
+                                           dtConcepto = BuscarDatos("PReporte_Concepto0")
                                            dtTotales = BuscarDatos("PReporte_ConceptoTotalVentasMejorado0")
                                        Case 1 'Para la optica
                                            dtDatos = BuscarDatos("PReporte_Semanal1")
                                            dtTipoPago = BuscarDatos("PReporte_TipoPagos1")
+                                           dtConcepto = BuscarDatos("PReporte_Concepto1")
                                            dtTotales = BuscarDatos("PReporte_ConceptoTotalVentasMejorado1")
                                    End Select
-                                   dtConcepto = BuscarDatos("PReporte_Concepto")
-                                   dtProductos = BuscarDatos("PReporte_Productos")
+                                   'dtProductos = BuscarDatos("PReporte_Productos")
                                    Try
                                        If dtDatos.Rows.Count = 0 Then
                                            MessageBox.Show("No hay datos para mostrar.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -290,7 +301,6 @@ Public Class FReporteSemanal
                                            Me.dgv_Totales.DataSource = dtTotales
                                            CargarEncabezadoGridView()
                                            BorrarCeldasDuplicadas()
-                                           'AgregarFilaTotales()
                                            DesSeleccionarDatagridView()
                                        End If
                                    Catch ex As Exception
@@ -407,6 +417,6 @@ Public Class FReporteSemanal
 
     Private Sub chkOpcion_CheckedChanged(sender As Object, e As EventArgs) Handles chkOpcion.CheckedChanged
         VerificarOptica()
-        CargarDatos(NumOptica)
+        CargarDatos(NumOptica, Desde, Hasta)
     End Sub
 End Class
