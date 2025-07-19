@@ -922,6 +922,8 @@ BEGIN
     ORDER BY MontoTotal DESC;
 END
 
+GO
+
 --EXEC PReporte_ConceptoTotalVentasMejorado1 '01/06/2025 00:00:00','30/06/2025 23:59:59';
 
 
@@ -1253,8 +1255,6 @@ BEGIN
 
 END
 
-
-
 GO
 
 ---PARA LAS OPTICAS
@@ -1318,7 +1318,8 @@ WITH Porcentajes AS (
         F.id,
         F.idOrden,
         F.Monto,
-		F.FechaPago, 
+		F.FechaPago,
+        F.Jornada,
         O.Total AS MontoPagar,
         CAST(
             SUM(F.Monto) OVER (
@@ -1326,8 +1327,7 @@ WITH Porcentajes AS (
                 ORDER BY F.id  
                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
             ) * 100.0 / O.Total AS DECIMAL(5,2)
-        ) AS Porcentaje,
-        F.Jornada 
+        ) AS Porcentaje
     FROM TFormaPago F
     INNER JOIN TOrden O ON F.idOrden = O.idOrden
 ),
@@ -1383,8 +1383,7 @@ SELECT
             )
         ) THEN P.MontoPagar
         ELSE 0  
-    END AS Apartado,
-    P.Jornada
+    END AS Apartado
 FROM Porcentajes P
 CROSS JOIN Umbrales U
 LEFT JOIN PagosPorOrden PPO ON P.idOrden = PPO.idOrden
