@@ -281,12 +281,12 @@ Public Class FReporteSemanal
                                            dtDatos = BuscarDatos("PReporte_Semanal0")
                                            dtTipoPago = BuscarDatos("PReporte_TipoPagos0")
                                            dtConcepto = BuscarDatos("PReporte_Concepto0")
-                                           dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas0")
+                                           'dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas0")
                                        Case 1 'Para la optica
                                            dtDatos = BuscarDatos("PReporte_Semanal1")
                                            dtTipoPago = BuscarDatos("PReporte_TipoPagos1")
                                            dtConcepto = BuscarDatos("PReporte_Concepto1")
-                                           dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas1")
+                                           'dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas1")
                                    End Select
                                    'dtProductos = BuscarDatos("PReporte_Productos")
                                    Try
@@ -298,7 +298,7 @@ Public Class FReporteSemanal
                                            Me.lbl_Registros.Text = dtDatos.Rows.Count.ToString()
                                            Me.dgv_TipoPagos.DataSource = dtTipoPago
                                            Me.dgv_Conceptos.DataSource = dtConcepto
-                                           Me.dgv_Totales.DataSource = dtTotales
+                                           'Me.dgv_Totales.DataSource = dtTotales
                                            CargarEncabezadoGridView()
                                            BorrarCeldasDuplicadas()
                                            DesSeleccionarDatagridView()

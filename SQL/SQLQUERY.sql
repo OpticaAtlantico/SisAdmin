@@ -1538,7 +1538,8 @@ SELECT
             )
         ) THEN P.MontoPagar
         ELSE 0  
-    END AS Apartado
+    END AS Apartado,
+    P.Jornada 
 FROM Porcentajes P
 CROSS JOIN Umbrales U
 LEFT JOIN PagosPorOrden PPO ON P.idOrden = PPO.idOrden
