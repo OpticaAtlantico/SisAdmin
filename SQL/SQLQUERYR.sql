@@ -104,6 +104,7 @@ BEGIN
         Apartado DECIMAL(18,2),
 	    Modo INT,
 	    FechaPago DATETIME,
+        Jornada INT NOT NULL,
 	    FechaActualizacion DATETIME DEFAULT GETDATE()
     );
 END
@@ -267,141 +268,139 @@ WHERE XP.idCategoria IN (4,5,6);
 GO
 -----------------------------------------------------------------------------------------
 
-
---- Vista para ayudar a la vista reportedepagodetallado
-
---------CREATE OR ALTER VIEW dbo.vwBasePagos AS
---------SELECT  
---------    F.id AS idPago,
---------    F.idOrden,
---------    O.FechaOrden,
---------    O.SubTotal,
---------    O.Descuento,
---------    O.Total AS MontoPagar,
---------    O.Jornada,
---------    O.idAsesor,
---------    O.idGerente,
---------    O.idOpto,
---------    O.idMarketing,
---------    F.FechaPago,
---------    F.Monto,
---------    F.idTipoPago,
---------    T.Nombre AS TipoPago,
---------    PCM.Porcentaje,
---------    PCM.Concepto,
---------    PCM.Apartado
---------FROM TFormaPago F
---------INNER JOIN TOrden O ON F.idOrden = O.idOrden
---------INNER JOIN TTipoPago T ON F.idTipoPago = T.id
---------LEFT JOIN dbo.PagosConConceptoMaterializado PCM 
---------    ON PCM.id = F.id AND PCM.Modo = 1;
-
-
 /*
 	REPORTE DETALLADO MODO PARA PROBAR ESTA CONSULTA
 */
 --PARA LA MOVIL
-------------CREATE OR ALTER VIEW dbo.vwReportePagosDetallado0 AS
-------------WITH BasePagos AS (
-------------    SELECT  
-------------        F.id AS idPago,
-------------        F.idOrden,
-------------        O.FechaOrden,
-------------        O.SubTotal,
-------------        O.Descuento,
-------------        O.Total AS MontoPagar,
-------------        O.Jornada,
-------------        O.idAsesor,
-------------        O.idGerente,
-------------        O.idOpto,
-------------        O.idMarketing,
-------------        F.FechaPago,
-------------        F.Monto,
-------------        F.idTipoPago,
-------------        T.Nombre AS TipoPago,
-------------        PCM.Porcentaje,
-------------        PCM.Concepto,
-------------        PCM.Apartado
-------------    FROM TFormaPago F
-------------    INNER JOIN TOrden O ON F.idOrden = O.idOrden
-------------    INNER JOIN TTipoPago T ON F.idTipoPago = T.id
-------------    LEFT JOIN dbo.PagosConConceptoMaterializado PCM ON PCM.id = F.id AND PCM.Modo = 0  -- Cambia a 0 si deseas usar el umbral del 20%
-------------),
-------------PagosNumerados AS (
-------------    SELECT *,
-------------        ROW_NUMBER() OVER (PARTITION BY idOrden ORDER BY FechaPago, idPago) AS NumPago
-------------    FROM BasePagos
-------------)
-------------SELECT 
-------------    ROW_NUMBER() OVER (ORDER BY idOrden, FechaPago, idPago) AS Item,
-------------    CAST(FechaOrden AS DATE) AS Fecha_Venta,
-------------    idOrden,
-------------    SubTotal,
-------------    Descuento,
-------------    MontoPagar AS Total,
-------------    CASE WHEN SubTotal > 0 THEN (Descuento * 100.0) / SubTotal ELSE 0 END AS Porc_Descuento,
+CREATE OR ALTER VIEW dbo.vwReportePagosDetallado0 AS
+WITH BasePagos AS (
+    SELECT  
+        F.id AS idPago,
+        F.idOrden,
+        O.FechaOrden,
+        O.SubTotal,
+        O.Descuento,
+        O.Total AS MontoPagar,
+        O.Jornada,
+        O.idAsesor,
+        O.idGerente,
+        O.idOpto,
+        O.idMarketing,
+        F.FechaPago,
+        F.Monto,
+        F.idTipoPago,
+        T.Nombre AS TipoPago,
+        PCM.Porcentaje,
+        PCM.Concepto,
+        PCM.Apartado
+    FROM TFormaPago F
+    INNER JOIN TOrden O ON F.idOrden = O.idOrden
+    INNER JOIN TTipoPago T ON F.idTipoPago = T.id
+    LEFT JOIN dbo.PagosConConceptoMaterializado PCM ON PCM.id = F.id AND PCM.Modo = 0  -- Cambia a 0 si deseas usar el umbral del 20%
+),
+PagosNumerados AS (
+    SELECT *,
+        ROW_NUMBER() OVER (PARTITION BY idOrden ORDER BY FechaPago, idPago) AS NumPago
+    FROM BasePagos
+)
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY idOrden, FechaPago, idPago) AS Item,
+    CAST(FechaOrden AS DATE) AS Fecha_Venta,
+    idOrden,
+    SubTotal,
+    Descuento,
+    MontoPagar AS Total,
+    CASE WHEN SubTotal > 0 THEN (Descuento * 100.0) / SubTotal ELSE 0 END AS Porc_Descuento,
 
-------------    CAST(FechaPago AS DATE) AS Fecha_Abono,
-------------    Monto,
-------------    UPPER(LTRIM(RTRIM(TipoPago))) AS TipoPago,
-------------    ISNULL(Porcentaje, 0) AS Anticipo,
-------------    NumPago,
-------------    Concepto,
-------------    Apartado,
+    CAST(FechaPago AS DATE) AS Fecha_Abono,
+    Monto,
+    UPPER(LTRIM(RTRIM(TipoPago))) AS TipoPago,
+    ISNULL(Porcentaje, 0) AS Anticipo,
+    NumPago,
+    Concepto,
+    Apartado,
 
-------------    UPPER(TRIM(EA.Nombre)) AS Asesor,
-------------    UPPER(TRIM(EG.Nombre)) AS Gerente,
-------------    UPPER(TRIM(EO.Nombre)) AS Optometrista,
-------------    UPPER(TRIM(EM.Nombre)) AS Marketing,
-------------    UPPER(TRIM(Jornada)) AS Jornada,
+    UPPER(TRIM(EA.Nombre)) AS Asesor,
+    UPPER(TRIM(EG.Nombre)) AS Gerente,
+    UPPER(TRIM(EO.Nombre)) AS Optometrista,
+    UPPER(TRIM(EM.Nombre)) AS Marketing,
+    UPPER(TRIM(Jornada)) AS Jornada,
 
-------------    '' AS Cobranza
-------------FROM PagosNumerados P
-------------LEFT JOIN TEmpleado EA ON EA.idEmpleado = P.idAsesor
-------------LEFT JOIN TEmpleado EG ON EG.idEmpleado = P.idGerente
-------------LEFT JOIN TEmpleado EO ON EO.idEmpleado = P.idOpto
-------------LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing
-------------WHERE P.idMarketing > 1;
+    '' AS Cobranza
+FROM PagosNumerados P
+LEFT JOIN TEmpleado EA ON EA.idEmpleado = P.idAsesor
+LEFT JOIN TEmpleado EG ON EG.idEmpleado = P.idGerente
+LEFT JOIN TEmpleado EO ON EO.idEmpleado = P.idOpto
+LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing
+WHERE P.idMarketing > 1;
 
--------------- SELECT * FROM vwReportePagosDetallado0 
+-- SELECT * FROM vwReportePagosDetallado0 
 
-------------GO
+GO
 
---------------PARA EL MODO 1 PARA EL RESTO DE LAS OPTICAS
-------------CREATE OR ALTER VIEW dbo.vwReportePagosDetallado1 AS
-------------WITH PagosNumerados AS (
-------------    SELECT *,
-------------        ROW_NUMBER() OVER (PARTITION BY idOrden ORDER BY FechaPago, idPago) AS NumPago
-------------    FROM dbo.vwBasePagos
-------------)
-------------SELECT 
-------------    ROW_NUMBER() OVER (ORDER BY idOrden, FechaPago, idPago) AS Item,
-------------    CAST(FechaOrden AS DATE) AS Fecha_Venta,
-------------    idOrden,
-------------    SubTotal,
-------------    Descuento,
-------------    MontoPagar AS Total,
-------------    CASE WHEN SubTotal > 0 THEN (Descuento * 100.0) / SubTotal ELSE 0 END AS Porc_Descuento,
-------------    CAST(FechaPago AS DATE) AS Fecha_Abono,
-------------    Monto,
-------------    TipoPago,  -- Evitamos UPPER(TRIM()) aquí
-------------    ISNULL(Porcentaje, 0) AS Anticipo,
-------------    NumPago,
-------------    Concepto,
-------------    Apartado,
-------------    EA.Nombre AS Asesor,
-------------    EG.Nombre AS Gerente,
-------------    EO.Nombre AS Optometrista,
-------------    EM.Nombre AS Marketing,
-------------    Jornada,
-------------    '' AS Cobranza
-------------FROM PagosNumerados P
-------------LEFT JOIN TEmpleado EA ON EA.idEmpleado = P.idAsesor
-------------LEFT JOIN TEmpleado EG ON EG.idEmpleado = P.idGerente
-------------LEFT JOIN TEmpleado EO ON EO.idEmpleado = P.idOpto
-------------LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing
-------------WHERE ISNULL(P.idMarketing, 0) = 1; -- Evitamos posibles NULL
+--PARA EL MODO 1 PARA EL RESTO DE LAS OPTICAS
+CREATE OR ALTER VIEW dbo.vwReportePagosDetallado1 AS
+WITH BasePagos AS (
+    SELECT  
+        F.id AS idPago,
+        F.idOrden,
+        O.FechaOrden,
+        O.SubTotal,
+        O.Descuento,
+        O.Total AS MontoPagar,
+        O.Jornada,
+        O.idAsesor,
+        O.idGerente,
+        O.idOpto,
+        O.idMarketing,
+        F.FechaPago,
+        F.Monto,
+        F.idTipoPago,
+        T.Nombre AS TipoPago,
+        PCM.Porcentaje,
+        PCM.Concepto,
+        PCM.Apartado
+    FROM TFormaPago F
+    INNER JOIN TOrden O ON F.idOrden = O.idOrden
+    INNER JOIN TTipoPago T ON F.idTipoPago = T.id
+    LEFT JOIN dbo.PagosConConceptoMaterializado PCM 
+        ON PCM.id = F.id AND PCM.Modo = 1  -- Cambia a 0 si deseas usar el umbral del 20%
+),
+PagosNumerados AS (
+    SELECT *,
+        ROW_NUMBER() OVER (PARTITION BY idOrden ORDER BY FechaPago, idPago) AS NumPago
+    FROM BasePagos
+)
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY idOrden, FechaPago, idPago) AS Item,
+    CAST(FechaOrden AS DATE) AS Fecha_Venta,
+    idOrden,
+    SubTotal,
+    Descuento,
+    MontoPagar AS Total,
+    CASE WHEN SubTotal > 0 THEN (Descuento * 100.0) / SubTotal ELSE 0 END AS Porc_Descuento,
 
+    CAST(FechaPago AS DATE) AS Fecha_Abono,
+    Monto,
+    UPPER(LTRIM(RTRIM(TipoPago))) AS TipoPago,
+    ISNULL(Porcentaje, 0) AS Anticipo,
+    NumPago,
+    Concepto,
+    Apartado,
+
+    UPPER(TRIM(EA.Nombre)) AS Asesor,
+    UPPER(TRIM(EG.Nombre)) AS Gerente,
+    UPPER(TRIM(EO.Nombre)) AS Optometrista,
+    UPPER(TRIM(EM.Nombre)) AS Marketing,
+    UPPER(TRIM(Jornada)) AS Jornada,
+
+    '' AS Cobranza
+FROM PagosNumerados P
+LEFT JOIN TEmpleado EA ON EA.idEmpleado = P.idAsesor
+LEFT JOIN TEmpleado EG ON EG.idEmpleado = P.idGerente
+LEFT JOIN TEmpleado EO ON EO.idEmpleado = P.idOpto
+LEFT JOIN TEmpleado EM ON EM.idEmpleado = P.idMarketing
+WHERE P.idMarketing = 1;
 
 GO
 
@@ -635,43 +634,43 @@ GO
 
    PROCEDIMIENTO PARA MOSTRAR LOS CONCEPTOS VENTAS, APARTADOS, RETIROS, ABONOS POR FECHA
    ======================================================= */
---------------------CREATE OR ALTER PROCEDURE PReporte_Concepto0
---------------------	@FechaIni DATETIME,
---------------------	@FechaFin DATETIME
---------------------AS
---------------------BEGIN
+CREATE OR ALTER PROCEDURE PReporte_Concepto0
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
+AS
+BEGIN
 
---------------------		SELECT 
---------------------			Concepto,
---------------------			COUNT(*) AS TotalPagos,
---------------------			SUM(Monto) AS MontoTotal
---------------------		FROM dbo.PagosConConceptoMaterializado P
---------------------		WHERE P.FechaPago BETWEEN @FechaIni AND @FechaFin AND P.Modo = 0
---------------------		GROUP BY P.Concepto
---------------------		ORDER BY MontoTotal DESC;
+		SELECT 
+			Concepto,
+			COUNT(*) AS TotalPagos,
+			SUM(Monto) AS MontoTotal
+		FROM dbo.PagosConConceptoMaterializado P
+		WHERE P.FechaPago BETWEEN @FechaIni AND @FechaFin AND P.Modo = 0
+		GROUP BY P.Concepto
+		ORDER BY MontoTotal DESC;
 
---------------------END
+END
 
---------------------GO
+GO
 
---------------------CREATE OR ALTER PROCEDURE PReporte_Concepto1
---------------------	@FechaIni DATETIME,
---------------------	@FechaFin DATETIME
---------------------AS
---------------------BEGIN
+CREATE OR ALTER PROCEDURE PReporte_Concepto1
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
+AS
+BEGIN
 
---------------------		SELECT 
---------------------			Concepto,
---------------------			COUNT(*) AS TotalPagos,
---------------------			SUM(Monto) AS MontoTotal
---------------------		FROM dbo.PagosConConceptoMaterializado P
---------------------		WHERE P.FechaPago BETWEEN @FechaIni AND @FechaFin AND P.Modo = 1
---------------------		GROUP BY P.Concepto
---------------------		ORDER BY MontoTotal DESC;
+		SELECT 
+			Concepto,
+			COUNT(*) AS TotalPagos,
+			SUM(Monto) AS MontoTotal
+		FROM dbo.PagosConConceptoMaterializado P
+		WHERE P.FechaPago BETWEEN @FechaIni AND @FechaFin AND P.Modo = 1
+		GROUP BY P.Concepto
+		ORDER BY MontoTotal DESC;
 
---------------------END
+END
 
-----GO
+GO
 
 --CREATE OR ALTER PROCEDURE PReporte_ConceptoTotalVentas0
 --    @FechaIni DATETIME,
@@ -1318,72 +1317,68 @@ GO
    PROCEDIMIENTO PARA MOSTRAR LOS DATOS DE LAS VENTAS HASTA EL CONCEPTO 
    ======================================================= */
 
-   -- 0 PARA MOVIL Y 1 PARA OPTICAS
-CREATE OR ALTER PROCEDURE PReporte_Semanal
-    @FechaIni DATETIME,
-    @FechaFin DATETIME,
-    @Modo INT  -- 0 = móvil, 1 = óptica
+   --PARA LA MOVIL
+CREATE OR ALTER PROCEDURE PReporte_Semanal0
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
 AS
 BEGIN
-    SET NOCOUNT ON;
 
-    SELECT 
-        CAST(P.Fecha_Venta AS DATE) AS Fecha_Venta,
-        P.idOrden,
-        P.SubTotal,
-        P.Descuento, 
-        P.Total,
-        CONVERT(DECIMAL(10,2), P.Porc_Descuento) AS Porcentaje,
-        CAST(P.Fecha_Abono AS DATE) AS Fecha_Abono,
-        P.Monto,
-        P.Anticipo,
-        P.TipoPago,
-        P.Apartado,
-        P.Concepto,
-        P.Asesor,
-        P.Gerente,
-        P.Marketing
-    FROM fnPagosDetalladosModo(@Modo) P
-    WHERE P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-    ORDER BY P.idOrden;
-END;
+		SELECT 
+			CAST(P.Fecha_Venta AS DATE) AS Fecha_Venta,
+			P.idOrden,
+			P.SubTotal,
+			P.Descuento, 
+			P.Total,
+			CONVERT(DECIMAL(10,2), P.Porc_Descuento) AS Porcentaje,
+			CAST(P.Fecha_Abono AS DATE) AS Fecha_Abono,
+			P.Monto,
+			P.Anticipo,
+			P.TipoPago,
+			P.Apartado,
+			P.Concepto,
+			P.Asesor,
+			P.Gerente,
+			P.Marketing 
+		FROM dbo.vwReportePagosDetallado0 P
+		WHERE P.Fecha_Abono BETWEEN @FechaIni and @FechaFin AND P.Marketing <> '' --Se le coloco >1 para diferenciar la  movil de la optica 
+		ORDER BY P.idOrden;
 
--- FORMA DE USO EN LA APP
---EXEC PReporte_Semanal '2024-07-01', '2024-07-07', 1; -- para óptica
---EXEC PReporte_Semanal '2024-07-01', '2024-07-07', 0; -- para móvil
+END
 
-----------------------------------------------------------------------------------------
+--EXEC PReporte_Semanal0 '01/01/2025','30/07/2025'; 
+--EXEC dbo.RefrescarPagosConConcepto
 
 GO
 
 ---PARA LAS OPTICAS EXCEPTO LA MOVIL
---------------------CREATE OR ALTER PROCEDURE PReporte_Semanal1
---------------------	@FechaIni DATETIME,
---------------------	@FechaFin DATETIME
---------------------AS
---------------------BEGIN
+CREATE OR ALTER PROCEDURE PReporte_Semanal1
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
+AS
+BEGIN
 
---------------------		SELECT 
---------------------			CAST(P.Fecha_Venta AS DATE) AS Fecha_Venta,
---------------------			P.idOrden,
---------------------			P.SubTotal,
---------------------			P.Descuento, 
---------------------			P.Total,
---------------------			CONVERT(DECIMAL(10,2), P.Porc_Descuento) AS Porcentaje,
---------------------			CAST(P.Fecha_Abono AS DATE) AS Fecha_Abono,
---------------------			P.Monto,
---------------------			P.Anticipo,
---------------------			P.TipoPago,
---------------------			P.Apartado,
---------------------			P.Concepto,
---------------------			P.Asesor,
---------------------			P.Gerente,
---------------------			P.Marketing 
---------------------		FROM dbo.vwReportePagosDetallado1 P
---------------------		WHERE P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing = ''  --Se le coloco <= 1 para diferenciar la optica  de la movil
---------------------		ORDER BY P.idOrden;
+		SELECT 
+			CAST(P.Fecha_Venta AS DATE) AS Fecha_Venta,
+			P.idOrden,
+			P.SubTotal,
+			P.Descuento, 
+			P.Total,
+			CONVERT(DECIMAL(10,2), P.Porc_Descuento) AS Porcentaje,
+			CAST(P.Fecha_Abono AS DATE) AS Fecha_Abono,
+			P.Monto,
+			P.Anticipo,
+			P.TipoPago,
+			P.Apartado,
+			P.Concepto,
+			P.Asesor,
+			P.Gerente,
+			P.Marketing 
+		FROM dbo.vwReportePagosDetallado1 P
+		WHERE P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin AND P.Marketing = ''  --Se le coloco <= 1 para diferenciar la optica  de la movil
+		ORDER BY P.idOrden;
 
---------------------END
+END
 
 GO
 ---------------------------------------------------------------------------
@@ -1397,46 +1392,40 @@ GO
    ======================================================= */
 
 ---PARA LA MOVIL
-CREATE OR ALTER PROCEDURE PReporte_TipoPagos
-    @FechaIni DATETIME,
-    @FechaFin DATETIME,
-    @Modo INT  -- 0 = móvil, 1 = óptica
+CREATE OR ALTER PROCEDURE PReporte_TipoPagos0
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
 AS
 BEGIN
-    SET NOCOUNT ON;
 
-    SELECT
-        P.TipoPago,
-        COUNT(*) AS CantidadMovimientos,
-        SUM(P.Monto) AS TotalPorTipoPago
-    FROM fnPagosDetalladosModo(@Modo) P
-    WHERE P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-    GROUP BY P.TipoPago;
-END;
+		SELECT
+			P.TipoPago,
+			COUNT(*) AS CantidadMovimientos,
+			SUM(P.Monto) AS TotalPorTipoPago
+		FROM vwReportePagosDetallado0 P
+		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin --AND P.Marketing <> '' 
+		GROUP BY P.TipoPago
 
---COMO SE UTILIZA EN LA APP
---EXEC PReporte_TipoPagos '2024-07-01', '2024-07-07', 0; -- Para móvil
---EXEC PReporte_TipoPagos '2024-07-01', '2024-07-07', 1; -- Para óptica
-
+END
 
 GO
 
 ---PARA LAS OPTICAS
-----------------CREATE OR ALTER PROCEDURE PReporte_TipoPagos1
-----------------	@FechaIni DATETIME,
-----------------	@FechaFin DATETIME
-----------------AS
-----------------BEGIN
+CREATE OR ALTER PROCEDURE PReporte_TipoPagos1
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
+AS
+BEGIN
 
-----------------		SELECT
-----------------			P.TipoPago,
-----------------			COUNT(*) AS CantidadMovimientos,
-----------------			SUM(P.Monto) AS TotalPorTipoPago
-----------------		FROM vwReportePagosDetallado1 P
-----------------		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin --AND P.Marketing = ''
-----------------		GROUP BY P.TipoPago
+		SELECT
+			P.TipoPago,
+			COUNT(*) AS CantidadMovimientos,
+			SUM(P.Monto) AS TotalPorTipoPago
+		FROM vwReportePagosDetallado1 P
+		WHERE P.Fecha_Abono  BETWEEN @FechaIni AND @FechaFin --AND P.Marketing = ''
+		GROUP BY P.TipoPago
 
-----------------END
+END
 
 GO
 --------------------------------------------------------------------------------------
@@ -1450,45 +1439,15 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- 1. Limpieza orbital (solo el modo solicitado)
-    DELETE FROM dbo.PagosConConceptoMaterializado
-    WHERE Modo = CAST(@Modo AS VARCHAR); -- evita bloqueos y respeta partición lógica
+    --DELETE FROM dbo.PagosConConceptoMaterializado WHERE Modo = @Modo;
+	TRUNCATE TABLE dbo.PagosConConceptoMaterializado
 
-    -- 2. Materialización orbital intermedia
+    INSERT INTO dbo.PagosConConceptoMaterializado (
+        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, Modo, FechaPago, Jornada
+    )
     SELECT 
-        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado,
-        CAST(@Modo AS VARCHAR) AS Modo,
-        FechaPago, Jornada
-    INTO #PagosTemp
+        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, CAST(@Modo AS VARCHAR) AS Modo, FechaPago, Jornada 
     FROM dbo.fnPagosConConcepto(@Modo, @Desde, @Hasta)
-    OPTION (RECOMPILE); -- genera plan optimizado
-
-    -- 3. Preparar lote incremental
-    DECLARE @BatchSize INT = 5000;
-    DECLARE @TotalFilas INT;
-    DECLARE @Procesados INT = 0;
-
-    SELECT @TotalFilas = COUNT(*) FROM #PagosTemp;
-
-    WHILE @Procesados < @TotalFilas
-    BEGIN
-        INSERT INTO dbo.PagosConConceptoMaterializado (
-            id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado,
-            Modo, FechaPago, Jornada
-        )
-        SELECT TOP (@BatchSize) *
-        FROM #PagosTemp
-        WHERE id NOT IN (
-            SELECT id FROM dbo.PagosConConceptoMaterializado
-            WHERE Modo = CAST(@Modo AS VARCHAR)
-        )
-        ORDER BY id;
-
-        SET @Procesados = @Procesados + @BatchSize;
-    END
-
-    -- 4. Liberar memoria
-    DROP TABLE #PagosTemp;
 END;
 
 --EXEC dbo.RefrescarPagosConConcepto('1', '01/05/2025','30/07/2025');
@@ -1504,49 +1463,47 @@ GO
 	FUNCION [fnPagosConConcepto]
 
 */
-CREATE OR ALTER FUNCTION fnPagosConConcepto (
-    @Modo INT,
-    @Desde DATE,
-    @Hasta DATE
-)
+CREATE OR ALTER FUNCTION fnPagosConConcepto (@Modo INT, @Desde DATE, @Hasta DATE)
 RETURNS TABLE
 AS
 RETURN
-WITH Umbral AS (
-    SELECT CASE WHEN @Modo = 0 THEN 20.0 ELSE 40.0 END AS Valor
-),
-Pagos AS (
+WITH Porcentajes AS (
     SELECT 
         F.id,
         F.idOrden,
         F.Monto,
-        F.FechaPago,
+		F.FechaPago,
         F.Jornada,
         O.Total AS MontoPagar,
-        SUM(F.Monto) OVER (
-            PARTITION BY F.idOrden  
-            ORDER BY F.id  
-            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-        ) * 100.0 / O.Total AS Porcentaje
+        CAST(
+            SUM(F.Monto) OVER (
+                PARTITION BY F.idOrden  
+                ORDER BY F.id  
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            ) * 100.0 / O.Total AS DECIMAL(5,2)
+        ) AS Porcentaje
     FROM TFormaPago F
     INNER JOIN TOrden O ON F.idOrden = O.idOrden
-    WHERE F.Jornada = @Modo AND F.FechaPago BETWEEN @Desde AND @Hasta
+),
+Umbrales AS (
+    SELECT 
+        CASE WHEN @Modo = 0 THEN 20.0 ELSE 40.0 END AS Umbral
 ),
 PagosPorOrden AS (
     SELECT idOrden, COUNT(*) AS TotalPagos
-    FROM Pagos
+    FROM Porcentajes P
     GROUP BY idOrden
 ),
 PrimeraVenta AS (
     SELECT P.idOrden, MIN(P.id) AS idVenta
-    FROM Pagos P
-    CROSS JOIN Umbral U
-    WHERE P.Porcentaje >= U.Valor AND P.Porcentaje < 100
+    FROM Porcentajes P
+    CROSS JOIN Umbrales U
+    WHERE P.Porcentaje >= U.Umbral AND P.Porcentaje < 100
     GROUP BY P.idOrden
 ),
-VentaPorRetiro AS (
+MarcarVentaPorRetiroDirecto AS (
     SELECT P.idOrden, MAX(P.id) AS idVentaFinal
-    FROM Pagos P
+    FROM Porcentajes P
     WHERE P.Porcentaje = 100 AND P.idOrden NOT IN (
         SELECT idOrden FROM PrimeraVenta
     )
@@ -1557,37 +1514,37 @@ SELECT
     P.idOrden,
     P.Monto,
     P.MontoPagar,
-    CAST(P.Porcentaje AS DECIMAL(5,2)) AS Porcentaje,
-    P.FechaPago,
+    P.Porcentaje,
+	P.FechaPago,
     CASE
         WHEN P.Porcentaje = 100 AND PPO.TotalPagos = 1 THEN 'Venta'
-        WHEN P.Porcentaje = 100 AND P.id = VPR.idVentaFinal THEN 'Venta'
+        WHEN P.Porcentaje = 100 AND P.id = MVP.idVentaFinal THEN 'Venta'
         WHEN P.Porcentaje = 100 THEN 'Retiro'
         WHEN P.id = PV.idVenta THEN 'Venta'
-        WHEN P.Porcentaje >= U.Valor THEN 'Abono'
-        WHEN P.Porcentaje < U.Valor THEN 'Apartado'
+        WHEN P.Porcentaje >= U.Umbral THEN 'Abono'
+        WHEN P.Porcentaje < U.Umbral THEN 'Apartado'
         ELSE 'N/A'
     END AS Concepto,
     CASE 
         WHEN 
-            (P.Porcentaje < U.Valor  
+            (P.Porcentaje < U.Umbral  
             OR (
-                P.Porcentaje = 100 AND P.id = VPR.idVentaFinal  
+                P.Porcentaje = 100 AND P.id = MVP.idVentaFinal  
                 AND PPO.TotalPagos > 1
                 AND NOT EXISTS (
                     SELECT 1 FROM PrimeraVenta WHERE idOrden = P.idOrden
                 )
             )
         ) THEN P.MontoPagar
-        ELSE 0
+        ELSE 0  
     END AS Apartado,
-    P.Jornada
-FROM Pagos P
-CROSS JOIN Umbral U
+    P.Jornada 
+FROM Porcentajes P
+CROSS JOIN Umbrales U
 LEFT JOIN PagosPorOrden PPO ON P.idOrden = PPO.idOrden
 LEFT JOIN PrimeraVenta PV ON P.idOrden = PV.idOrden
-LEFT JOIN VentaPorRetiro VPR ON P.idOrden = VPR.idOrden
-
+LEFT JOIN MarcarVentaPorRetiroDirecto MVP ON P.idOrden = MVP.idOrden
+WHERE P.Jornada = @Modo AND P.FechaPago BETWEEN @Desde AND @Hasta;
 
 -- SELECT * FROM fnPagosConConcepto(1, '2025-05-01', '2025-07-31')
 
@@ -1595,31 +1552,31 @@ GO
 -------------------------------------------------------------------------------------------
 
 
---------------CREATE OR ALTER FUNCTION dbo.fn_CalcularConceptoPago (
---------------    @NumPago INT,
---------------    @MontoPagar DECIMAL(18,2),
---------------    @TotalOrden DECIMAL(18,2)
---------------)
---------------RETURNS VARCHAR(20)
---------------AS
---------------BEGIN
---------------    DECLARE @Concepto VARCHAR(20)
+CREATE OR ALTER FUNCTION dbo.fn_CalcularConceptoPago (
+    @NumPago INT,
+    @MontoPagar DECIMAL(18,2),
+    @TotalOrden DECIMAL(18,2)
+)
+RETURNS VARCHAR(20)
+AS
+BEGIN
+    DECLARE @Concepto VARCHAR(20)
 
---------------    IF @MontoPagar < 0
---------------        SET @Concepto = 'RETIRO'
---------------    ELSE IF @NumPago IS NULL OR @MontoPagar IS NULL OR @TotalOrden IS NULL
---------------        SET @Concepto = 'ERROR'
---------------    ELSE IF @NumPago = 1 AND @MontoPagar = @TotalOrden
---------------        SET @Concepto = 'VENTA'
---------------    ELSE IF @NumPago = 1 AND @MontoPagar < @TotalOrden
---------------        SET @Concepto = 'APARTADO'
---------------    ELSE IF @NumPago > 1
---------------        SET @Concepto = 'ABONO'
---------------    ELSE
---------------        SET @Concepto = 'ERROR'
+    IF @MontoPagar < 0
+        SET @Concepto = 'RETIRO'
+    ELSE IF @NumPago IS NULL OR @MontoPagar IS NULL OR @TotalOrden IS NULL
+        SET @Concepto = 'ERROR'
+    ELSE IF @NumPago = 1 AND @MontoPagar = @TotalOrden
+        SET @Concepto = 'VENTA'
+    ELSE IF @NumPago = 1 AND @MontoPagar < @TotalOrden
+        SET @Concepto = 'APARTADO'
+    ELSE IF @NumPago > 1
+        SET @Concepto = 'ABONO'
+    ELSE
+        SET @Concepto = 'ERROR'
 
---------------    RETURN @Concepto
---------------END
+    RETURN @Concepto
+END
 
 
 

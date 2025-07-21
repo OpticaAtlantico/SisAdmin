@@ -220,15 +220,15 @@ Public Class FReporteSemanal
 
         End With
 
-        With Me.dgv_Totales
+        'With Me.dgv_Totales
 
-            .Columns(0).HeaderText = "Concepto" : .Columns(0).Width = 180
-            .Columns(1).HeaderText = "Cantidad" : .Columns(1).Width = 80 : .Columns(1).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            .Columns(2).HeaderText = "Monto" : .Columns(2).Width = 100 : .Columns(2).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
+        '    .Columns(0).HeaderText = "Concepto" : .Columns(0).Width = 180
+        '    .Columns(1).HeaderText = "Cantidad" : .Columns(1).Width = 80 : .Columns(1).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+        '    .Columns(2).HeaderText = "Monto" : .Columns(2).Width = 100 : .Columns(2).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
 
-            .ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+        '    .ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
 
-        End With
+        'End With
 
     End Sub
 
@@ -275,19 +275,10 @@ Public Class FReporteSemanal
             AddHandler worker.DoWork,
                     Sub()
                         Invoke(Sub()
-                                   ' Cargar datos aquí
-                                   Select Case NumOptica
-                                       Case 0 'Para la movil
-                                           dtDatos = BuscarDatos("PReporte_Semanal0")
-                                           dtTipoPago = BuscarDatos("PReporte_TipoPagos0")
-                                           dtConcepto = BuscarDatos("PReporte_Concepto0")
-                                           'dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas0")
-                                       Case 1 'Para la optica
-                                           dtDatos = BuscarDatos("PReporte_Semanal1")
-                                           dtTipoPago = BuscarDatos("PReporte_TipoPagos1")
-                                           dtConcepto = BuscarDatos("PReporte_Concepto1")
-                                           'dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas1")
-                                   End Select
+                                   dtDatos = BuscarDatos("PReporte_Semanal")
+                                   dtTipoPago = BuscarDatos("PReporte_TipoPagos")
+                                   dtConcepto = BuscarDatos("PReporte_Concepto")
+                                   'dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas1")
                                    'dtProductos = BuscarDatos("PReporte_Productos")
                                    Try
                                        If dtDatos.Rows.Count = 0 Then
@@ -324,6 +315,7 @@ Public Class FReporteSemanal
                     'cmd.Connection = CNN
                     cmd.Parameters.AddWithValue("@FechaIni", FormatDateTime(fechaIni, DateFormat.ShortDate) & " " & fechaIni.ToString("00:00:00"))
                     cmd.Parameters.AddWithValue("@FechaFin", FormatDateTime(fechaFin, DateFormat.ShortDate) & " " & fechaFin.ToString("23:59:00"))
+                    cmd.Parameters.AddWithValue("@Modo", NumOptica)
                     If cmd.ExecuteNonQuery Then
                         Dim da As New SqlDataAdapter(cmd)
                         Dim dt As New DataTable()
