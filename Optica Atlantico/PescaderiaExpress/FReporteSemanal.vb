@@ -281,12 +281,12 @@ Public Class FReporteSemanal
                                            dtDatos = BuscarDatos("PReporte_Semanal0")
                                            dtTipoPago = BuscarDatos("PReporte_TipoPagos0")
                                            dtConcepto = BuscarDatos("PReporte_Concepto0")
-                                           dtTotales = BuscarDatos("PReporte_ConceptoTotalVentasMejorado0")
+                                           dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas0")
                                        Case 1 'Para la optica
                                            dtDatos = BuscarDatos("PReporte_Semanal1")
                                            dtTipoPago = BuscarDatos("PReporte_TipoPagos1")
                                            dtConcepto = BuscarDatos("PReporte_Concepto1")
-                                           dtTotales = BuscarDatos("PReporte_ConceptoTotalVentasMejorado1")
+                                           dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas1")
                                    End Select
                                    'dtProductos = BuscarDatos("PReporte_Productos")
                                    Try

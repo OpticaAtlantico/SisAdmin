@@ -1,4 +1,12 @@
-﻿--ACTUALIZACIÓN EL DIA 18/072025
+﻿--ACTUALIZACIÓN EL DIA 21/07/2025
+--SE MODIFICARON LOS PROCEDIMIENTOS CAMBIANDO EL NOMBRE Y LOS PROCEDIMIENTOS A MOVIL O OPTICAS
+    
+    --PReporte_ConceptoTotalVentas0
+    --PReporte_ConceptoTotalVentas1
+
+--------------------------------------------------------------------------------------------------------------------
+
+--ACTUALIZACIÓN EL DIA 18/07/2025
 --SE MODIFICARON LOS PROCEDIMIENTOS 
 
 --       vwReportePagosDetallado1
@@ -27,7 +35,6 @@ GO
 
 DROP TABLE IF EXISTS dbo.PagosConConceptoMaterializado; 
 GO
-
 DROP VIEW IF EXISTS vwHistorialFinancieroCliente0; 
 GO
 DROP VIEW IF EXISTS vwHistorialFinancieroCliente1; 
@@ -46,7 +53,6 @@ DROP VIEW IF EXISTS vwResumenMovimientosCaja;
 GO
 DROP VIEW IF EXISTS vwResumenVentasFinanciero; 
 GO
-
 DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto0; 
 GO
 DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto1;
@@ -98,8 +104,8 @@ BEGIN
         Apartado DECIMAL(18,2),
 	    Modo INT,
 	    FechaPago DATETIME,
-	    FechaActualizacion DATETIME DEFAULT GETDATE(),
-        Jornada INT NOT NULL
+        Jornada INT NOT NULL,
+	    FechaActualizacion DATETIME DEFAULT GETDATE()
     );
 END
 
@@ -666,148 +672,150 @@ END
 
 GO
 
-CREATE OR ALTER PROCEDURE PReporte_ConceptoTotalVentasMejorado0
+--CREATE OR ALTER PROCEDURE PReporte_ConceptoTotalVentas0
+--    @FechaIni DATETIME,
+--    @FechaFin DATETIME
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    -- 1. Venta al 100% (Contado directo sin apartados, abonos ni retiros)
+--    SELECT 'Venta al 100% (Contado)' AS Categoria,
+--           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+--           SUM(P.Total) AS MontoTotal
+--    FROM vwReportePagosDetallado0 P
+--    WHERE P.Concepto = 'Venta'
+--      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+--      AND NOT EXISTS (
+--          SELECT 1 FROM vwReportePagosDetallado0 X
+--          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Apartado', 'Abono', 'Retiro')
+--      )
+--      AND (
+--          SELECT COUNT(*) FROM vwReportePagosDetallado0 Y
+--          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Venta' 
+--      ) = 1
+
+--    UNION ALL
+
+--    -- 2. Apartado → Venta (sin retiro)
+--    SELECT 'Apartado → Venta' AS Categoria,
+--           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+--           SUM(P.Total) AS MontoTotal
+--    FROM vwReportePagosDetallado0 P
+--    WHERE P.Concepto = 'Apartado'
+--      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+--      AND EXISTS (
+--          SELECT 1 FROM vwReportePagosDetallado0 X
+--          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+--      )
+--      AND NOT EXISTS (
+--          SELECT 1 FROM vwReportePagosDetallado0 Y
+--          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
+--      )
+
+--    UNION ALL
+
+--    -- 3. Apartado → Venta → Retiro
+--    SELECT 'Apartado → Venta → Retiro' AS Categoria,
+--           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+--           SUM(P.Total) AS MontoTotal
+--    FROM vwReportePagosDetallado0 P
+--    WHERE P.Concepto = 'Apartado'
+--      AND EXISTS (
+--          SELECT 1 FROM vwReportePagosDetallado0 X
+--          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+--      )
+--      AND EXISTS (
+--          SELECT 1 FROM vwReportePagosDetallado0 Y
+--          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
+--      )
+
+--    UNION ALL
+
+--    -- 4. Apartado vigente (sin venta ni retiro)
+--    SELECT 'Apartado Periodo' AS Categoria,
+--           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+--           SUM(P.Total) AS MontoTotal
+--    FROM vwReportePagosDetallado0 P
+--    WHERE P.Concepto = 'Apartado'
+--      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+--      AND NOT EXISTS (
+--          SELECT 1 FROM vwReportePagosDetallado0 X
+--          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+--      )
+
+--      UNION ALL
+
+--    -- 4. Apartado vigente (sin venta ni retiro en toda la base de datos sin fecha periodo)
+--    SELECT 'Apartado Real' AS Categoria,
+--           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+--           SUM(P.Total) AS MontoTotal
+--    FROM vwReportePagosDetallado0 P
+--    WHERE P.Concepto = 'Apartado'
+--      AND NOT EXISTS (
+--          SELECT 1 FROM vwReportePagosDetallado0 X
+--          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+--      )
+
+--    UNION ALL
+
+--    -- 5. Orden completada y retirada (retiro directo)
+--    SELECT 'Orden completada y retirada' AS Categoria,
+--           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+--           SUM(P.Total) AS MontoTotal
+--    FROM vwReportePagosDetallado0 P
+--    WHERE P.Concepto = 'Retiro'
+--      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+
+--    UNION ALL
+
+--    -- 6. Venta (Crédito)
+--    SELECT 'Venta (Crédito)' AS Categoria,
+--           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+--           SUM(P.Total) AS MontoTotal
+--    FROM vwReportePagosDetallado0 P
+--    WHERE P.Concepto = 'Venta'
+--      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+
+--    UNION ALL
+
+--    -- 7. Apartados no concretados con 2 pagos y sin venta ni retiro
+--    SELECT 'Apartado no completado (2 pagos)' AS Categoria,
+--           COUNT(*) AS TotalOrdenes,
+--           SUM(Total) AS MontoTotal
+--    FROM (
+--        SELECT P.idOrden, SUM(P.Total) AS Total
+--        FROM vwReportePagosDetallado0 P
+--        WHERE Concepto = 'Apartado'
+--        GROUP BY P.idOrden
+--        HAVING COUNT(*) = 2
+--           AND NOT EXISTS (
+--               SELECT 1 FROM vwReportePagosDetallado0
+--               WHERE idOrden = vwReportePagosDetallado0.idOrden
+--                 AND Concepto IN ('Venta', 'Retiro')
+--           )
+--    ) AS P
+
+--    ORDER BY MontoTotal DESC;
+--END
+
+
+
+CREATE OR ALTER PROCEDURE PReporte_ConceptoTotalVentas1
     @FechaIni DATETIME,
-    @FechaFin DATETIME
+    @FechaFin DATETIME,
+    @Marketing INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- 1. Venta al 100% (Contado directo sin apartados, abonos ni retiros)
-    SELECT 'Venta al 100% (Contado)' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Venta'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-      AND NOT EXISTS (
-          SELECT 1 FROM vwReportePagosDetallado0 X
-          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Apartado', 'Abono', 'Retiro')
-      )
-      AND (
-          SELECT COUNT(*) FROM vwReportePagosDetallado0 Y
-          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Venta' 
-      ) = 1
-
-    UNION ALL
-
-    -- 2. Apartado → Venta (sin retiro)
-    SELECT 'Apartado → Venta' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Apartado'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-      AND EXISTS (
-          SELECT 1 FROM vwReportePagosDetallado0 X
-          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
-      )
-      AND NOT EXISTS (
-          SELECT 1 FROM vwReportePagosDetallado0 Y
-          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
-      )
-
-    UNION ALL
-
-    -- 3. Apartado → Venta → Retiro
-    SELECT 'Apartado → Venta → Retiro' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Apartado'
-      AND EXISTS (
-          SELECT 1 FROM vwReportePagosDetallado0 X
-          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
-      )
-      AND EXISTS (
-          SELECT 1 FROM vwReportePagosDetallado0 Y
-          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
-      )
-
-    UNION ALL
-
-    -- 4. Apartado vigente (sin venta ni retiro)
-    SELECT 'Apartado Periodo' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Apartado'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-      AND NOT EXISTS (
-          SELECT 1 FROM vwReportePagosDetallado0 X
-          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
-      )
-
-      UNION ALL
-
-    -- 4. Apartado vigente (sin venta ni retiro en toda la base de datos sin fecha periodo)
-    SELECT 'Apartado Real' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Apartado'
-      AND NOT EXISTS (
-          SELECT 1 FROM vwReportePagosDetallado0 X
-          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
-      )
-
-    UNION ALL
-
-    -- 5. Orden completada y retirada (retiro directo)
-    SELECT 'Orden completada y retirada' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Retiro'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-
-    UNION ALL
-
-    -- 6. Venta (Crédito)
-    SELECT 'Venta (Crédito)' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM vwReportePagosDetallado0 P
-    WHERE P.Concepto = 'Venta'
-      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-
-    UNION ALL
-
-    -- 7. Apartados no concretados con 2 pagos y sin venta ni retiro
-    SELECT 'Apartado no completado (2 pagos)' AS Categoria,
-           COUNT(*) AS TotalOrdenes,
-           SUM(Total) AS MontoTotal
-    FROM (
-        SELECT P.idOrden, SUM(P.Total) AS Total
-        FROM vwReportePagosDetallado0 P
-        WHERE Concepto = 'Apartado'
-        GROUP BY P.idOrden
-        HAVING COUNT(*) = 2
-           AND NOT EXISTS (
-               SELECT 1 FROM vwReportePagosDetallado0
-               WHERE idOrden = vwReportePagosDetallado0.idOrden
-                 AND Concepto IN ('Venta', 'Retiro')
-           )
-    ) AS P
-
-    ORDER BY MontoTotal DESC;
-END
-
-GO
-
-CREATE OR ALTER PROCEDURE PReporte_ConceptoTotalVentasMejorado1
-    @FechaIni DATETIME,
-    @FechaFin DATETIME
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    -- 1. Venta al 100% (Contado directo sin apartados, abonos ni retiros)
+    -- 1. Venta al 100% (Contado)
     SELECT 'Venta al 100% (Contado)' AS Categoria,
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado1 P
-    WHERE P.Concepto = 'Venta'
+    WHERE P.Marketing = @Marketing
+      AND P.Concepto = 'Venta'
       AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado1 X
@@ -825,7 +833,8 @@ BEGIN
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado1 P
-    WHERE P.Concepto = 'Apartado'
+    WHERE P.Marketing = @Marketing
+      AND P.Concepto = 'Apartado'
       AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
       AND EXISTS (
           SELECT 1 FROM vwReportePagosDetallado1 X
@@ -843,7 +852,8 @@ BEGIN
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado1 P
-    WHERE P.Concepto = 'Apartado'
+    WHERE P.Marketing = @Marketing
+      AND P.Concepto = 'Apartado'
       AND EXISTS (
           SELECT 1 FROM vwReportePagosDetallado1 X
           WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
@@ -855,26 +865,14 @@ BEGIN
 
     UNION ALL
 
-    -- 4. Apartado vigente (sin venta ni retiro)
+    -- 4. Apartado Periodo
     SELECT 'Apartado Periodo' AS Categoria,
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado1 P
-    WHERE P.Concepto = 'Apartado'
+    WHERE P.Marketing = @Marketing
+      AND P.Concepto = 'Apartado'
       AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-      AND NOT EXISTS (
-          SELECT 1 FROM vwReportePagosDetallado1 X
-          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
-      )
-
-      UNION ALL
-
-    -- 5. Apartado real (sin venta ni retiro en toda la base de datos con fecha periodo)
-    SELECT 'Apartado Real' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM vwReportePagosDetallado1 P
-    WHERE P.Concepto = 'Apartado'
       AND NOT EXISTS (
           SELECT 1 FROM vwReportePagosDetallado1 X
           WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
@@ -882,12 +880,27 @@ BEGIN
 
     UNION ALL
 
-    -- 6. Orden completada y retirada (retiro directo)
+    -- 5. Apartado Real
+    SELECT 'Apartado Real' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM vwReportePagosDetallado1 P
+    WHERE P.Marketing = @Marketing
+      AND P.Concepto = 'Apartado'
+      AND NOT EXISTS (
+          SELECT 1 FROM vwReportePagosDetallado1 X
+          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+      )
+
+    UNION ALL
+
+    -- 6. Orden completada y retirada
     SELECT 'Orden completada y retirada' AS Categoria,
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado1 P
-    WHERE P.Concepto = 'Retiro'
+    WHERE P.Marketing = @Marketing
+      AND P.Concepto = 'Retiro'
       AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
 
     UNION ALL
@@ -897,12 +910,13 @@ BEGIN
            COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
            SUM(P.Total) AS MontoTotal
     FROM vwReportePagosDetallado1 P
-    WHERE P.Concepto = 'Venta'
+    WHERE P.Marketing = @Marketing
+      AND P.Concepto = 'Venta'
       AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
 
     UNION ALL
 
-    -- 8. Apartados no concretados con 2 pagos y sin venta ni retiro
+    -- 8. Apartado no completado (2 pagos)
     SELECT 'Apartado no completado (2 pagos)' AS Categoria,
            COUNT(*) AS TotalOrdenes,
            SUM(Total) AS MontoTotal
@@ -910,6 +924,7 @@ BEGIN
         SELECT idOrden, SUM(Total) AS Total
         FROM vwReportePagosDetallado1
         WHERE Concepto = 'Apartado'
+          AND Marketing = @Marketing
         GROUP BY idOrden
         HAVING COUNT(*) = 2
            AND NOT EXISTS (
@@ -924,7 +939,145 @@ END
 
 GO
 
---EXEC PReporte_ConceptoTotalVentasMejorado1 '01/06/2025 00:00:00','30/06/2025 23:59:59';
+CREATE OR ALTER PROCEDURE PReporte_ConceptoTotalVentas0
+    @FechaIni DATETIME,
+    @FechaFin DATETIME
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- 1. Venta al 100% (Contado)
+    SELECT 'Venta al 100% (Contado)' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM vwReportePagosDetallado0 P
+    WHERE P.Marketing > 1
+      AND P.Concepto = 'Venta'
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+      AND NOT EXISTS (
+          SELECT 1 FROM vwReportePagosDetallado0 X
+          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Apartado', 'Abono', 'Retiro')
+      )
+      AND (
+          SELECT COUNT(*) FROM vwReportePagosDetallado0 X
+          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+      ) = 1
+
+    UNION ALL
+
+    -- 2. Apartado → Venta (sin retiro)
+    SELECT 'Apartado → Venta' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM vwReportePagosDetallado0 P
+    WHERE P.Marketing > 1
+      AND P.Concepto = 'Apartado'
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+      AND EXISTS (
+          SELECT 1 FROM vwReportePagosDetallado0 X
+          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM vwReportePagosDetallado0 Y
+          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
+      )
+
+    UNION ALL
+
+    -- 3. Apartado → Venta → Retiro
+    SELECT 'Apartado → Venta → Retiro' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM vwReportePagosDetallado0 P
+    WHERE P.Marketing > 1
+      AND P.Concepto = 'Apartado'
+      AND EXISTS (
+          SELECT 1 FROM vwReportePagosDetallado0 X
+          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+      )
+      AND EXISTS (
+          SELECT 1 FROM vwReportePagosDetallado0 Y
+          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
+      )
+
+    UNION ALL
+
+    -- 4. Apartado Periodo
+    SELECT 'Apartado Periodo' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM vwReportePagosDetallado0 P
+    WHERE P.Marketing > 1
+      AND P.Concepto = 'Apartado'
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+      AND NOT EXISTS (
+          SELECT 1 FROM vwReportePagosDetallado0 X
+          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+      )
+
+    UNION ALL
+
+    -- 5. Apartado Real
+    SELECT 'Apartado Real' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM vwReportePagosDetallado0 P
+    WHERE P.Marketing > 1
+      AND P.Concepto = 'Apartado'
+      AND NOT EXISTS (
+          SELECT 1 FROM vwReportePagosDetallado0 X
+          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+      )
+
+    UNION ALL
+
+    -- 6. Orden completada y retirada
+    SELECT 'Orden completada y retirada' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM vwReportePagosDetallado0 P
+    WHERE P.Marketing > 1
+      AND P.Concepto = 'Retiro'
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+
+    UNION ALL
+
+    -- 7. Venta (Crédito)
+    SELECT 'Venta (Crédito)' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM vwReportePagosDetallado0 P
+    WHERE P.Marketing > 1
+      AND P.Concepto = 'Venta'
+      AND P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+
+    UNION ALL
+
+    -- 8. Apartado no completado (2 pagos)
+    SELECT 'Apartado no completado (2 pagos)' AS Categoria,
+           COUNT(*) AS TotalOrdenes,
+           SUM(Total) AS MontoTotal
+    FROM (
+        SELECT idOrden, SUM(Total) AS Total
+        FROM vwReportePagosDetallado0
+        WHERE Concepto = 'Apartado'
+          AND Marketing > 1
+        GROUP BY idOrden
+        HAVING COUNT(*) = 2
+           AND NOT EXISTS (
+               SELECT 1 FROM vwReportePagosDetallado0
+               WHERE idOrden = vwReportePagosDetallado0.idOrden
+                 AND Concepto IN ('Venta', 'Retiro')
+           )
+    ) AS P
+
+    ORDER BY MontoTotal DESC;
+END
+
+--EXEC PReporte_ConceptoTotalVentas0 '01/06/2025 00:00:00','30/06/2025 23:59:59';
+
+GO
+
 
 
 /*
@@ -1194,7 +1347,8 @@ BEGIN
 
 END
 
---EXEC PReporte_Semanal1 '01/01/2025','30/07/2025'; dbo.RefrescarPagosConConcepto
+--EXEC PReporte_Semanal0 '01/01/2025','30/07/2025'; 
+--EXEC dbo.RefrescarPagosConConcepto
 
 GO
 
@@ -1293,18 +1447,19 @@ BEGIN
         id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, Modo, FechaPago, Jornada
     )
     SELECT 
-        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, @Modo, FechaPago, Jornada 
+        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado, CAST(@Modo AS VARCHAR) AS Modo, FechaPago, Jornada 
     FROM dbo.fnPagosConConcepto(@Modo, @Desde, @Hasta)
 END;
 
-
+--EXEC dbo.RefrescarPagosConConcepto('1', '01/05/2025','30/07/2025');
 GO
 -----------------------------------------------------------------------------------------------
 
 
 -------------------FUNCIONES
 
-
+--SELECT TOP 1 Jornada FROM TFormaPago
+--EXEC sp_help 'dbo.PagosConConceptoMaterializado'
 /*
 	FUNCION [fnPagosConConcepto]
 
@@ -1391,7 +1546,7 @@ LEFT JOIN PrimeraVenta PV ON P.idOrden = PV.idOrden
 LEFT JOIN MarcarVentaPorRetiroDirecto MVP ON P.idOrden = MVP.idOrden
 WHERE P.Jornada = @Modo AND P.FechaPago BETWEEN @Desde AND @Hasta;
 
--- SELECT * FROM fnPagosConConcepto(1, '2025-05-01', '2025-12-31')
+-- SELECT * FROM fnPagosConConcepto(1, '2025-05-01', '2025-07-31')
 
 GO
 -------------------------------------------------------------------------------------------
