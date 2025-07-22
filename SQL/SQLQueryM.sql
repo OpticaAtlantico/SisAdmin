@@ -472,7 +472,123 @@ END;
 
 GO
 
+CREATE OR ALTER PROCEDURE PReporte_ConceptoTotalVentas
+    @FechaIni DATETIME,
+    @FechaFin DATETIME,
+    @Modo INT  -- 0 = móvil (Marketing ≠ ''), 1 = óptica (Marketing = '')
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    -- Fuente única y canal diferenciado por @Modo
+    WITH Pagos AS (
+        SELECT * 
+        FROM fnPagosDetalladosModo(@Modo)
+        WHERE Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+          AND (
+                (@Modo = 1 AND LTRIM(RTRIM(ISNULL(Marketing, ''))) = '')     -- Óptica
+             OR (@Modo = 0 AND LTRIM(RTRIM(ISNULL(Marketing, ''))) <> '')   -- Móvil
+          )
+    )
+
+    -- 1. Venta al 100% (Contado)
+    SELECT 'Venta al 100% (Contado)' AS Categoria,
+           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+           SUM(P.Total) AS MontoTotal
+    FROM Pagos P
+    WHERE Concepto = 'Venta'
+      AND NOT EXISTS (
+          SELECT 1 FROM Pagos X
+          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Apartado', 'Abono', 'Retiro')
+      )
+      AND (SELECT COUNT(*) FROM Pagos X WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta') = 1
+
+    UNION ALL
+
+    -- 2. Apartado → Venta (sin retiro)
+    SELECT 'Apartado → Venta',
+           COUNT(DISTINCT P.idOrden),
+           SUM(P.Total)
+    FROM Pagos P
+    WHERE Concepto = 'Apartado'
+      AND EXISTS (SELECT 1 FROM Pagos X WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta')
+      AND NOT EXISTS (SELECT 1 FROM Pagos Y WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro')
+
+    UNION ALL
+
+    -- 3. Apartado → Venta → Retiro
+    SELECT 'Apartado → Venta → Retiro',
+           COUNT(DISTINCT P.idOrden),
+           SUM(P.Total)
+    FROM Pagos P
+    WHERE Concepto = 'Apartado'
+      AND EXISTS (SELECT 1 FROM Pagos X WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta')
+      AND EXISTS (SELECT 1 FROM Pagos Y WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro')
+
+    UNION ALL
+
+    -- 4. Apartado Periodo
+    SELECT 'Apartado Periodo',
+           COUNT(DISTINCT P.idOrden),
+           SUM(P.Total)
+    FROM Pagos P
+    WHERE Concepto = 'Apartado'
+      AND NOT EXISTS (
+          SELECT 1 FROM Pagos X WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+      )
+
+    UNION ALL
+
+    -- 5. Apartado Real
+    SELECT 'Apartado Real',
+           COUNT(DISTINCT P.idOrden),
+           SUM(P.Total)
+    FROM Pagos P
+    WHERE Concepto = 'Apartado'
+      AND NOT EXISTS (
+          SELECT 1 FROM Pagos X WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+      )
+
+    UNION ALL
+
+    -- 6. Orden completada y retirada
+    SELECT 'Orden completada y retirada',
+           COUNT(DISTINCT P.idOrden),
+           SUM(P.Total)
+    FROM Pagos P
+    WHERE Concepto = 'Retiro'
+
+    UNION ALL
+
+    -- 7. Venta (Crédito)
+    SELECT 'Venta (Crédito)',
+           COUNT(DISTINCT P.idOrden),
+           SUM(P.Total)
+    FROM Pagos P
+    WHERE Concepto = 'Venta'
+
+    UNION ALL
+
+    -- 8. Apartado no completado (2 pagos)
+    SELECT 'Apartado no completado (2 pagos)',
+           COUNT(*) AS TotalOrdenes,
+           SUM(Total) AS MontoTotal
+    FROM (
+        SELECT idOrden, SUM(Total) AS Total
+        FROM Pagos
+        WHERE Concepto = 'Apartado'
+        GROUP BY idOrden
+        HAVING COUNT(*) = 2
+           AND NOT EXISTS (
+               SELECT 1 FROM Pagos 
+               WHERE idOrden = Pagos.idOrden AND Concepto IN ('Venta', 'Retiro')
+           )
+    ) AS P
+
+    ORDER BY MontoTotal DESC;
+END;
+
+GO
 
 --------------------- FUNCIONES ---------------------------
 
@@ -493,7 +609,6 @@ Pagos AS (
         F.idOrden,
         F.Monto,
         F.FechaPago,
-        F.Jornada,
         O.Total AS MontoPagar,
         SUM(F.Monto) OVER (
             PARTITION BY F.idOrden  
@@ -502,7 +617,11 @@ Pagos AS (
         ) * 100.0 / O.Total AS Porcentaje
     FROM TFormaPago F
     INNER JOIN TOrden O ON F.idOrden = O.idOrden
-    WHERE F.Jornada = @Modo AND F.FechaPago BETWEEN @Desde AND @Hasta
+    WHERE F.FechaPago BETWEEN @Desde AND @Hasta
+      AND ISNULL(O.idMarketing, 0) = CASE 
+          WHEN @Modo = 1 THEN 1
+          WHEN @Modo = 0 THEN 2
+      END
 ),
 PagosPorOrden AS (
     SELECT idOrden, COUNT(*) AS TotalPagos
@@ -553,12 +672,13 @@ SELECT
         ) THEN P.MontoPagar
         ELSE 0
     END AS Apartado,
-    P.Jornada
+    @Modo AS Modo
 FROM Pagos P
 CROSS JOIN Umbral U
 LEFT JOIN PagosPorOrden PPO ON P.idOrden = PPO.idOrden
 LEFT JOIN PrimeraVenta PV ON P.idOrden = PV.idOrden
-LEFT JOIN VentaPorRetiro VPR ON P.idOrden = VPR.idOrden
+LEFT JOIN VentaPorRetiro VPR ON P.idOrden = VPR.idOrden;
+
 GO
 
 CREATE OR ALTER FUNCTION fnPagosDetalladosModo (

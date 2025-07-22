@@ -75,8 +75,6 @@ Public Class FReporteSemanal
     End Sub
 
     Private Sub FReporteSemanal_Load(sender As Object, e As EventArgs) Handles Me.Load
-        'NumOptica = ObtenerNombreOptica(1)
-        'CargarDatos(NumOptica)
         VerificarOptica()
         CargarFechas()
         CargarDatos(NumOptica, CDate(Desde), CDate(Hasta))
@@ -220,15 +218,15 @@ Public Class FReporteSemanal
 
         End With
 
-        'With Me.dgv_Totales
+        With Me.dgv_Totales
 
-        '    .Columns(0).HeaderText = "Concepto" : .Columns(0).Width = 180
-        '    .Columns(1).HeaderText = "Cantidad" : .Columns(1).Width = 80 : .Columns(1).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        '    .Columns(2).HeaderText = "Monto" : .Columns(2).Width = 100 : .Columns(2).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
+            .Columns(0).HeaderText = "Concepto" : .Columns(0).Width = 180
+            .Columns(1).HeaderText = "Cantidad" : .Columns(1).Width = 80 : .Columns(1).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            .Columns(2).HeaderText = "Monto" : .Columns(2).Width = 100 : .Columns(2).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
 
-        '    .ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            .ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
 
-        'End With
+        End With
 
     End Sub
 
@@ -278,7 +276,7 @@ Public Class FReporteSemanal
                                    dtDatos = BuscarDatos("PReporte_Semanal")
                                    dtTipoPago = BuscarDatos("PReporte_TipoPagos")
                                    dtConcepto = BuscarDatos("PReporte_Concepto")
-                                   'dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas1")
+                                   dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas")
                                    'dtProductos = BuscarDatos("PReporte_Productos")
                                    Try
                                        If dtDatos.Rows.Count = 0 Then
@@ -289,7 +287,7 @@ Public Class FReporteSemanal
                                            Me.lbl_Registros.Text = dtDatos.Rows.Count.ToString()
                                            Me.dgv_TipoPagos.DataSource = dtTipoPago
                                            Me.dgv_Conceptos.DataSource = dtConcepto
-                                           'Me.dgv_Totales.DataSource = dtTotales
+                                           Me.dgv_Totales.DataSource = dtTotales
                                            CargarEncabezadoGridView()
                                            BorrarCeldasDuplicadas()
                                            DesSeleccionarDatagridView()
