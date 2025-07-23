@@ -77,7 +77,7 @@ Public Class FReporteSemanal
     Private Sub FReporteSemanal_Load(sender As Object, e As EventArgs) Handles Me.Load
         VerificarOptica()
         CargarFechas()
-        CargarDatos(NumOptica, CDate(Desde), CDate(Hasta))
+        'CargarDatos(NumOptica, CDate(Desde), CDate(Hasta))
         LimpiarDatagrid()
         bgWorker.WorkerReportsProgress = True
         bgWorker.WorkerSupportsCancellation = False
@@ -194,6 +194,10 @@ Public Class FReporteSemanal
             .Columns(9).HeaderText = "Tipo Pago" : .Columns(9).Width = 120 : .Columns(9).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
             .Columns(10).HeaderText = "Apartado" : .Columns(10).Width = 90 : .Columns(10).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             .Columns(11).HeaderText = "Concepto" : .Columns(11).Width = 80 : .Columns(11).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            .Columns(12).HeaderText = "Asesor" : .Columns(12).Width = 130 : .Columns(12).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
+            .Columns(13).HeaderText = "Optometrista" : .Columns(13).Width = 130 : .Columns(13).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
+            .Columns(14).HeaderText = "Gerente" : .Columns(14).Width = 130 : .Columns(14).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
+            .Columns(15).HeaderText = "Marketing" : .Columns(15).Width = 130 : .Columns(15).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
 
             .ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
         End With
@@ -311,8 +315,8 @@ Public Class FReporteSemanal
                 Using cmd As New SqlCommand(reporte, CNN)
                     cmd.CommandType = CommandType.StoredProcedure
                     'cmd.Connection = CNN
-                    cmd.Parameters.AddWithValue("@FechaIni", FormatDateTime(fechaIni, DateFormat.ShortDate) & " " & fechaIni.ToString("00:00:00"))
-                    cmd.Parameters.AddWithValue("@FechaFin", FormatDateTime(fechaFin, DateFormat.ShortDate) & " " & fechaFin.ToString("23:59:00"))
+                    cmd.Parameters.AddWithValue("@FechaIni", New DateTime(fechaIni.Year, fechaIni.Month, fechaIni.Day, 0, 0, 0))
+                    cmd.Parameters.AddWithValue("@FechaFin", fechaFin.AddDays(1))
                     cmd.Parameters.AddWithValue("@Modo", NumOptica)
                     If cmd.ExecuteNonQuery Then
                         Dim da As New SqlDataAdapter(cmd)

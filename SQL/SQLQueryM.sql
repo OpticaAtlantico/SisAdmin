@@ -1,18 +1,97 @@
 ﻿USE BDOptica2 
 GO
 
-USE BDOptica2 
+--ELIMINAR TODOS LOS PROCEDIMIENTO, VISTAS Y TABLAS viejos
+
+DROP TABLE IF EXISTS dbo.PagosConConceptoMaterializado; 
 GO
+DROP VIEW IF EXISTS vwHistorialFinancieroCliente0; 
+GO
+DROP VIEW IF EXISTS vwHistorialFinancieroCliente1; 
+GO
+DROP VIEW IF EXISTS vwProductosPorOrden; 
+GO
+DROP VIEW IF EXISTS vwProductosPorOrdenDesglosado; 
+GO
+DROP VIEW IF EXISTS vwReportePagosDetallado0; 
+GO
+DROP VIEW IF EXISTS vwReportePagosDetallado1; 
+GO
+DROP VIEW IF EXISTS vwReporteVentaCompleta; 
+GO
+DROP VIEW IF EXISTS vwResumenMovimientosCaja; 
+GO
+DROP VIEW IF EXISTS vwResumenVentasFinanciero; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto0;
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto;
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto1;
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas0; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas1; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Empleados; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_PagosConProductos; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Productos; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_ResumenFinanciero; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal0; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal1; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos0; 
+GO
+DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos1; 
+GO
+DROP PROCEDURE IF EXISTS dbo.RefrescarPagosConConcepto; 
+GO
+
+DROP FUNCTION IF EXISTS dbo.fn_CalcularConceptoPago; 
+GO
+DROP FUNCTION IF EXISTS dbo.fnPagosConConcepto; 
+GO
+
+TRUNCATE TABLE dbo.PagosConConceptoMaterializado
 
 --ELIMINAR TODOS LOS PROCEDIMIENTO, VISTAS Y TABLAS
 
 DROP TABLE IF EXISTS dbo.PagosConConceptoMaterializado; 
 GO
 
-
-DROP FUNCTION IF EXISTS dbo.fn_CalcularConceptoPago; 
+DROP VIEW IF EXISTS dbo.vwProductosPorOrden; 
 GO
-DROP FUNCTION IF EXISTS dbo.fnPagosConConcepto; 
+
+DROP VIEW IF EXISTS dbo.vwProductosPorOrdenDesglosado; 
+GO
+
+DROP VIEW IF EXISTS dbo.vwProductosPorOrden; 
+GO
+
+DROP PROCEDURE IF EXISTS dbo.PReporte_Semanal; 
+GO
+
+DROP PROCEDURE IF EXISTS dbo.PReporte_TipoPagos; 
+GO
+
+DROP PROCEDURE IF EXISTS dbo.PReporte_Concepto; 
+GO
+
+DROP PROCEDURE IF EXISTS dbo.RefrescarPagosConConcepto; 
+GO
+
+DROP PROCEDURE IF EXISTS dbo.PReporte_ConceptoTotalVentas; 
+GO
+
+DROP FUNCTION IF EXISTS fnPagosConConcepto; 
+GO
+
+DROP FUNCTION IF EXISTS fnPagosDetalladosModo; 
 GO
 
 ------------TABLA 
@@ -23,21 +102,31 @@ IF NOT EXISTS (
     WHERE TABLE_SCHEMA = 'dbo'
       AND TABLE_NAME = 'PagosConConceptoMaterializado'
 )
-BEGIN
-    CREATE TABLE dbo.PagosConConceptoMaterializado (
-        id INT PRIMARY KEY,
-        idOrden INT,
-        Monto DECIMAL(18,2),
-        MontoPagar DECIMAL(18,2),
-        Porcentaje DECIMAL(5,2),
-        Concepto VARCHAR(20),
+    BEGIN
+        CREATE TABLE dbo.PagosConConceptoMaterializado (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        FechaVenta DATE,
+        IdOrden INT,
+        SubTotal DECIMAL(18,2),
+        Descuento DECIMAL(18,2),
+        Total DECIMAL(18,2),
+        Porcentaje DECIMAL(18,2),
+        FechaPago DATETIME,
+        MontoAbonado DECIMAL(18,2), 
+        Anticipo DECIMAL(5,2),
+        TipoPago NVARCHAR(50),
         Apartado DECIMAL(18,2),
-	    Modo INT,
-	    FechaPago DATETIME,
-	    FechaActualizacion DATETIME DEFAULT GETDATE()
+        Concepto VARCHAR(20),
+        NumPago INT,
+        Asesor NVARCHAR(60),
+        Optometrista NVARCHAR(60),
+        Gerente NVARCHAR(60),
+        Marketing NVARCHAR(60),
+        Modo INT,
+        FechaActualizacion DATETIME DEFAULT GETDATE()
     );
 END
-GO
+
 
 ------------------ INDICES -----------------------------
 
@@ -81,17 +170,18 @@ CREATE NONCLUSTERED INDEX IX_TOrden_idMarketing ON TOrden(idMarketing);
 -- ========================================
 -- 🚀 INDICES PARA TABLA: PagosConConceptoMaterializado
 -- ========================================
-IF NOT EXISTS (
-    SELECT 1 FROM sys.indexes 
-    WHERE name = 'IX_PCM_id' AND object_id = OBJECT_ID('PagosConConceptoMaterializado')
-)
-CREATE CLUSTERED INDEX IX_PCM_id ON PagosConConceptoMaterializado(id);
+--IF NOT EXISTS (
+--    SELECT 1 FROM sys.indexes 
+--    WHERE name = 'IX_PCM_id' AND object_id = OBJECT_ID('PagosConConceptoMaterializado')
+--)
+--CREATE CLUSTERED INDEX IX_PCM_id ON PagosConConceptoMaterializado(id);
 
 IF NOT EXISTS (
     SELECT 1 FROM sys.indexes 
     WHERE name = 'IX_PCM_Modo' AND object_id = OBJECT_ID('PagosConConceptoMaterializado')
 )
-CREATE NONCLUSTERED INDEX IX_PCM_Modo ON PagosConConceptoMaterializado(Modo);
+CREATE NONCLUSTERED INDEX IX_PCM_idOrden_Modo ON PagosConConceptoMaterializado(idOrden, Modo);
+
 
 -- ========================================
 -- 🚀 INDICE PARA TABLA: TEmpleado
@@ -104,10 +194,9 @@ CREATE NONCLUSTERED INDEX IX_TEmpleado_idEmpleado ON TEmpleado(idEmpleado);
 
 GO
 
-
 ------------------ VISTAS ----------------------------
 
-CREATE OR ALTER VIEW dbo.vwProductosPorOrden AS
+CREATE OR ALTER VIEW vwProductosPorOrden AS
 SELECT 
     O.idOrden,
 	F.FechaPago, 
@@ -235,8 +324,7 @@ WHERE XP.idCategoria IN (4,5,6);
 
 GO
 
-
-CREATE OR ALTER VIEW dbo.vwProductosPorOrden AS
+CREATE OR ALTER VIEW vwProductosPorOrden AS
 SELECT 
     O.idOrden,
 	F.FechaPago, 
@@ -317,42 +405,49 @@ GO
 
 -----------------  PROCEDIMIENTOS -------------------
 
-CREATE OR ALTER PROCEDURE PReporte_Semanal
-    @FechaIni DATETIME,
-    @FechaFin DATETIME,
-    @Modo INT  -- 0 = móvil, 1 = óptica
+CREATE OR ALTER PROCEDURE dbo.PReporte_Semanal
+    @Modo INT,
+    @FechaIni DATE,
+    @FechaFin DATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
     SELECT 
-        CAST(P.Fecha_Venta AS DATE) AS Fecha_Venta,
-        P.idOrden,
-        P.SubTotal,
-        P.Descuento, 
-        P.Total,
-        CONVERT(DECIMAL(10,2), P.Porc_Descuento) AS Porcentaje,
-        CAST(P.Fecha_Abono AS DATE) AS Fecha_Abono,
-        P.Monto,
-        P.Anticipo,
-        P.TipoPago,
-        P.Apartado,
-        P.Concepto,
-        P.Asesor,
-        P.Gerente,
-        P.Marketing
-    FROM fnPagosDetalladosModo(@Modo) P
-    WHERE P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-    ORDER BY P.idOrden;
+        --id,
+        FechaVenta,
+        IdOrden,
+        SubTotal,
+        Descuento,
+        Total,
+        -- Puedes calcular porcentaje si lo necesitas:
+        CAST((Descuento * 100.0) / NULLIF(SubTotal, 0) AS DECIMAL(5,2)) AS Porc_Descuento,
+        FechaPago,
+        MontoAbonado,
+        Anticipo,
+        TipoPago,
+        Apartado,
+        Concepto,
+        Asesor,
+        Optometrista,
+        Gerente,
+        Marketing
+        --Modo,
+        --FechaActualizacion
+    FROM dbo.PagosConConceptoMaterializado
+    WHERE Modo = @Modo
+      AND FechaPago >= @FechaIni AND FechaPago < DATEADD(DAY, 1, @FechaFin)
+    ORDER BY IdOrden, NumPago
 END;
 
+
 -- FORMA DE USO EN LA APP
---EXEC PReporte_Semanal '01/05/2025', '30/07/2025', 1; -- para óptica
---EXEC PReporte_Semanal '01/05/2025', '30/07/2025', 0; -- para móvil
+--EXEC PReporte_Semanal 1, '01/06/2025', '30/07/2025'; -- para óptica
+--EXEC PReporte_Semanal 0, '01/05/2025', '30/07/2025'; -- para móvil
 
 GO
 
-CREATE OR ALTER PROCEDURE PReporte_TipoPagos
+CREATE OR ALTER PROCEDURE dbo.PReporte_TipoPagos
     @FechaIni DATETIME,
     @FechaFin DATETIME,
     @Modo INT  -- 0 = móvil, 1 = óptica
@@ -361,13 +456,16 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
-        P.TipoPago,
+        TipoPago,
         COUNT(*) AS CantidadMovimientos,
-        SUM(P.Monto) AS TotalPorTipoPago
-    FROM fnPagosDetalladosModo(@Modo) P
-    WHERE P.Fecha_Abono BETWEEN @FechaIni AND @FechaFin
-    GROUP BY P.TipoPago;
+        SUM(MontoAbonado) AS TotalPorTipoPago
+    FROM dbo.PagosConConceptoMaterializado
+    WHERE FechaPago >= @FechaIni AND FechaPago < DATEADD(DAY, 1, @FechaFin)
+      AND Modo = @Modo
+    GROUP BY TipoPago
+    ORDER BY TotalPorTipoPago DESC;
 END;
+
 
 --COMO SE UTILIZA EN LA APP
 --EXEC PReporte_TipoPagos '01/05/2025', '30/07/2025', 0; -- Para móvil
@@ -387,9 +485,9 @@ BEGIN
     SELECT 
         Concepto,
         COUNT(*) AS TotalPagos,
-        SUM(Monto) AS MontoTotal
+        SUM(MontoAbonado) AS MontoTotal
     FROM dbo.PagosConConceptoMaterializado P
-    WHERE P.FechaPago BETWEEN @FechaIni AND @FechaFin
+    WHERE P.FechaPago >= @FechaIni AND P.FechaPago < DATEADD(DAY, 1, @FechaFin)
       AND P.Modo = @Modo
     GROUP BY Concepto
     ORDER BY MontoTotal DESC;
@@ -409,66 +507,93 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -------------------------------
-    -- 1. Eliminación por lotes
-    -------------------------------
-    DECLARE @BatchSizeDelete INT = 10000;
-    DECLARE @FilasEliminadas INT = 1;
-
-    WHILE @FilasEliminadas > 0
-    BEGIN
-        DELETE TOP (@BatchSizeDelete)
-        FROM dbo.PagosConConceptoMaterializado
-        WHERE Modo = CAST(@Modo AS VARCHAR);
-
-        SET @FilasEliminadas = @@ROWCOUNT;
-    END
-
-    -------------------------------
-    -- 2. Materialización temporal
-    -------------------------------
     SELECT 
-        id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado,
-        CAST(@Modo AS VARCHAR) AS Modo,
-        FechaPago
+        O.FechaOrden AS FechaVenta,
+        O.idOrden AS IdOrden,
+        O.SubTotal,
+        O.Descuento,
+        O.Total,
+        PC.Porcentaje AS Anticipo,         -- % de avance del pago
+        F.FechaPago,
+        F.Monto AS MontoAbonado,           -- Monto monetario abonado
+        PC.Porcentaje,
+        T.Nombre AS TipoPago,
+        PC.Apartado,
+        PC.Concepto,
+        PC.NumPago,                        -- ✅ nuevo campo para trazabilidad
+        EA.Nombre AS Asesor,
+        EG.Nombre AS Gerente,
+        EO.Nombre AS Optometrista,
+        EM.Nombre AS Marketing,
+        @Modo AS Modo,
+        GETDATE() AS FechaActualizacion
     INTO #PagosTemp
-    FROM dbo.fnPagosConConcepto(@Modo, @Desde, @Hasta)
-    OPTION (RECOMPILE);
+    FROM fnPagosConConcepto(@Modo, @Desde, @Hasta) PC
+    INNER JOIN TFormaPago F ON F.id = PC.id
+    INNER JOIN TOrden O ON F.idOrden = O.idOrden
+    INNER JOIN TTipoPago T ON F.idTipoPago = T.id
+    LEFT JOIN TEmpleado EA ON EA.idEmpleado = O.idAsesor
+    LEFT JOIN TEmpleado EG ON EG.idEmpleado = O.idGerente
+    LEFT JOIN TEmpleado EO ON EO.idEmpleado = O.idOpto
+    LEFT JOIN TEmpleado EM ON EM.idEmpleado = O.idMarketing;
 
-    CREATE CLUSTERED INDEX IX_PagosTemp_id ON #PagosTemp(id);
+    CREATE CLUSTERED INDEX IX_PagosTemp_IdOrden ON #PagosTemp(IdOrden);
 
-    -------------------------------
-    -- 3. Inserción por lotes rápida
-    -------------------------------
-    DECLARE @BatchSizeInsert INT = 10000;
-    DECLARE @UltimoId INT = 0;
-    DECLARE @FilasInsertadas INT = 1;
-
-    WHILE @FilasInsertadas > 0
-    BEGIN
-        INSERT INTO dbo.PagosConConceptoMaterializado (
-            id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado,
-            Modo, FechaPago
+    MERGE dbo.PagosConConceptoMaterializado AS Target
+    USING #PagosTemp AS Source
+    ON Target.IdOrden = Source.IdOrden 
+       AND Target.Concepto = Source.Concepto 
+       AND Target.Modo = Source.Modo
+    WHEN NOT MATCHED BY TARGET THEN
+        INSERT (
+            FechaVenta,
+            IdOrden,
+            SubTotal,
+            Descuento,
+            Total,
+            Porcentaje,
+            FechaPago,
+            MontoAbonado,
+            Anticipo,
+            TipoPago,
+            Apartado,
+            Concepto,
+            NumPago,                       -- ✅ insertado aquí también
+            Asesor,
+            Optometrista,
+            Gerente,
+            Marketing,
+            Modo,
+            FechaActualizacion
         )
-        SELECT TOP (@BatchSizeInsert)
-            id, idOrden, Monto, MontoPagar, Porcentaje, Concepto, Apartado,
-            Modo, FechaPago
-        FROM #PagosTemp
-        WHERE id > @UltimoId
-        ORDER BY id;
+        VALUES (
+            Source.FechaVenta,
+            Source.IdOrden,
+            Source.SubTotal,
+            Source.Descuento,
+            Source.Total,
+            Source.Porcentaje,
+            Source.FechaPago,
+            Source.MontoAbonado,
+            Source.Anticipo,
+            Source.TipoPago,
+            Source.Apartado,
+            Source.Concepto,
+            Source.NumPago,
+            Source.Asesor,
+            Source.Optometrista,
+            Source.Gerente,
+            Source.Marketing,
+            Source.Modo,
+            Source.FechaActualizacion
+        );
 
-        SET @FilasInsertadas = @@ROWCOUNT;
-        SET @UltimoId = @UltimoId + @BatchSizeInsert;
-    END
-
-    -------------------------------
-    -- 4. Liberar memoria
-    -------------------------------
     DROP TABLE #PagosTemp;
 END;
 
 
---EXEC dbo.RefrescarPagosConConcepto 1, '01/05/2025','30/07/2025';
+
+--EXEC dbo.RefrescarPagosConConcepto 1, '01/09/2024','30/07/2025';
 
 GO
 
@@ -483,8 +608,8 @@ BEGIN
     -- Fuente única y canal diferenciado por @Modo
     WITH Pagos AS (
         SELECT * 
-        FROM fnPagosDetalladosModo(@Modo)
-        WHERE Fecha_Abono BETWEEN @FechaIni AND @FechaFin
+        FROM PagosConConceptoMaterializado
+        WHERE FechaPago >= @FechaIni AND FechaPago < DATEADD(DAY, 1, @FechaFin)
           AND (
                 (@Modo = 1 AND LTRIM(RTRIM(ISNULL(Marketing, ''))) = '')     -- Óptica
              OR (@Modo = 0 AND LTRIM(RTRIM(ISNULL(Marketing, ''))) <> '')   -- Móvil
@@ -588,6 +713,8 @@ BEGIN
     ORDER BY MontoTotal DESC;
 END;
 
+--EXEC PReporte_ConceptoTotalVentas '01/05/2025','30/07/2025', 1;
+
 GO
 
 --------------------- FUNCIONES ---------------------------
@@ -617,7 +744,7 @@ Pagos AS (
         ) * 100.0 / O.Total AS Porcentaje
     FROM TFormaPago F
     INNER JOIN TOrden O ON F.idOrden = O.idOrden
-    WHERE F.FechaPago BETWEEN @Desde AND @Hasta
+    WHERE F.FechaPago >= @Desde AND F.FechaPago < DATEADD(DAY, 1, @Hasta)
       AND ISNULL(O.idMarketing, 0) = CASE 
           WHEN @Modo = 1 THEN 1
           WHEN @Modo = 0 THEN 2
@@ -672,12 +799,17 @@ SELECT
         ) THEN P.MontoPagar
         ELSE 0
     END AS Apartado,
+    ROW_NUMBER() OVER (
+        PARTITION BY P.idOrden 
+        ORDER BY P.FechaPago, P.id
+    ) AS NumPago,                      -- ✅ campo agregado
     @Modo AS Modo
 FROM Pagos P
 CROSS JOIN Umbral U
 LEFT JOIN PagosPorOrden PPO ON P.idOrden = PPO.idOrden
 LEFT JOIN PrimeraVenta PV ON P.idOrden = PV.idOrden
 LEFT JOIN VentaPorRetiro VPR ON P.idOrden = VPR.idOrden;
+
 
 GO
 
@@ -695,26 +827,27 @@ WITH BasePagos AS (
         O.SubTotal,
         O.Descuento,
         O.Total AS MontoPagar,
-        O.idAsesor,
-        O.idGerente,
-        O.idOpto,
-        O.idMarketing,
         F.FechaPago,
         F.Monto,
-        F.idTipoPago,
         T.Nombre AS TipoPago,
         PCM.Porcentaje,
         PCM.Concepto,
         PCM.Apartado,
-        PCM.Modo AS ModoOrigen
+        PCM.Modo AS ModoOrigen,
+        O.idAsesor,
+        O.idGerente,
+        O.idOpto,
+        O.idMarketing
     FROM TFormaPago F
     INNER JOIN TOrden O ON F.idOrden = O.idOrden
     INNER JOIN TTipoPago T ON F.idTipoPago = T.id
     LEFT JOIN dbo.PagosConConceptoMaterializado PCM 
-        ON PCM.id = F.id AND PCM.Modo = @Modo
+        ON PCM.idOrden = F.idOrden 
+        AND PCM.Modo = CAST(@Modo AS VARCHAR)
+        AND PCM.Concepto IS NOT NULL
     WHERE ISNULL(O.idMarketing, 0) = CASE 
         WHEN @Modo = 1 THEN 1         -- Óptica
-        WHEN @Modo = 0 THEN 2         -- Móvil (puedes ajustar si hay más valores mayores a 1)
+        WHEN @Modo = 0 THEN 2         -- Móvil
     END
 ),
 PagosNumerados AS (
@@ -724,14 +857,14 @@ PagosNumerados AS (
 )
 SELECT 
     ROW_NUMBER() OVER (ORDER BY idOrden, FechaPago, idPago) AS Item,
-    CAST(FechaOrden AS DATE) AS Fecha_Venta,
+    CAST(FechaOrden AS DATE) AS FechaVenta,
     idOrden,
     SubTotal,
     Descuento,
     MontoPagar AS Total,
-    CASE WHEN SubTotal > 0 THEN (Descuento * 100.0) / SubTotal ELSE 0 END AS Porc_Descuento,
-    CAST(FechaPago AS DATE) AS Fecha_Abono,
-    Monto,
+    CASE WHEN SubTotal > 0 THEN (Descuento * 100.0) / SubTotal ELSE 0 END AS Descuentos,
+    CAST(FechaPago AS DATE) AS FechaPago,
+    Monto AS MontoAbonado,
     TipoPago,
     ISNULL(Porcentaje, 0) AS Anticipo,
     NumPago,
