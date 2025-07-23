@@ -406,9 +406,9 @@ GO
 -----------------  PROCEDIMIENTOS -------------------
 
 CREATE OR ALTER PROCEDURE dbo.PReporte_Semanal
-    @Modo INT,
     @FechaIni DATE,
-    @FechaFin DATE
+    @FechaFin DATE,
+    @Modo INT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -721,17 +721,34 @@ END;
 
 GO
 
-CREATE OR ALTER PROCEDURE dbo.spInicializarPagosDia
-    @Fecha DATE = NULL
+CREATE OR ALTER PROCEDURE dbo.spInicializarPagosDiaInteligente
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @Desde DATE = ISNULL(@Fecha, CAST(GETDATE() AS DATE))
-    DECLARE @Hasta DATE = @Desde
+    DECLARE @FechaInicioSistema DATE = '2024-09-01'
+    DECLARE @FechaActual DATE = CAST(GETDATE() AS DATE)
+    DECLARE @Desde DATE
+    DECLARE @Hasta DATE = @FechaActual
+    DECLARE @Existentes INT
 
-    EXEC dbo.RefrescarPagosConConcepto
-         @Desde = @Desde,
+    -- Verifica si hay registros en la tabla
+    SELECT @Existentes = COUNT(*) 
+    FROM dbo.PagosConConceptoMaterializado
+
+    IF @Existentes = 0
+    BEGIN
+        PRINT '🟢 Tabla vacía. Se realizará carga completa desde el 01/09/2024 hasta hoy.'
+        SET @Desde = @FechaInicioSistema
+    END
+    ELSE
+    BEGIN
+        PRINT '🟡 Tabla contiene datos. Se actualizará solo la jornada de hoy.'
+        SET @Desde = @FechaActual
+    END
+
+    EXEC dbo.RefrescarPagosConConcepto 
+         @Desde = @Desde, 
          @Hasta = @Hasta
 END;
 
@@ -819,8 +836,11 @@ LEFT JOIN PagosPorOrden PPO ON P.idOrden = PPO.idOrden
 LEFT JOIN PrimeraVenta PV ON P.idOrden = PV.idOrden
 LEFT JOIN VentaPorRetiro VPR ON P.idOrden = VPR.idOrden;
 
+GO
 
-
-
+EXEC PReporte_Semanal '01/05/2025', '30/07/2025', 1;
+EXEC PReporte_TipoPagos '01/05/2025', '30/07/2025', 1;
+EXEC PReporte_Concepto '01/05/2025', '30/07/2025', 1;
+EXEC PReporte_ConceptoTotalVentas '01/05/2025','30/07/2025', 1;
 
 

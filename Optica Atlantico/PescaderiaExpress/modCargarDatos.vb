@@ -35,22 +35,21 @@ Module modCargarDatos
         Return dtResultado.Rows.Count > 0
     End Function
 
-    Public Sub CargarDatos(NumOptica As Integer, Desde As DateTime, Hasta As DateTime)
+    Public Sub CargarDatos()
         Try
             If Conectar() Then
-                Using cmd As New SqlCommand("dbo.RefrescarPagosConConcepto", CNN)
+                Using cmd As New SqlCommand("dbo.spInicializarPagosDiaInteligente", CNN)
                     cmd.CommandType = CommandType.StoredProcedure
-                    cmd.Parameters.Add("@Modo", SqlDbType.Int).Value = NumOptica
-                    cmd.Parameters.Add("@Desde", SqlDbType.Date).Value = Desde
-                    cmd.Parameters.Add("@Hasta", SqlDbType.Date).Value = Hasta
                     cmd.ExecuteNonQuery()
-                    Desconectar()
                 End Using
+                Desconectar()
+                MsgBox("✅ Carga de pagos completada correctamente.", MsgBoxStyle.Information)
             End If
         Catch ex As Exception
-            MsgBox(ex.Message)
+            MsgBox("❌ Error al ejecutar la carga de pagos: " & ex.Message, MsgBoxStyle.Critical)
         End Try
     End Sub
+
 
     Public Function ObtenerNombreOptica(ByVal idOptica) As Integer
         Dim valor As Integer

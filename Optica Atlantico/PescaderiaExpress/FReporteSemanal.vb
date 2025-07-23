@@ -77,7 +77,7 @@ Public Class FReporteSemanal
     Private Sub FReporteSemanal_Load(sender As Object, e As EventArgs) Handles Me.Load
         VerificarOptica()
         CargarFechas()
-        'CargarDatos(NumOptica, CDate(Desde), CDate(Hasta))
+        'CargarDatos()
         LimpiarDatagrid()
         bgWorker.WorkerReportsProgress = True
         bgWorker.WorkerSupportsCancellation = False
@@ -310,8 +310,8 @@ Public Class FReporteSemanal
     Public Function BuscarDatos(reporte As String) As DataTable
         Try
             If Conectar() Then
-                Dim fechaIni As DateTime = Me.dtp_FechaInicial.Text
-                Dim fechaFin As DateTime = Me.dtp_FechaFinal.Text
+                Dim fechaIni As DateTime = Me.dtp_FechaInicial.Value
+                Dim fechaFin As DateTime = Me.dtp_FechaFinal.Value
                 Using cmd As New SqlCommand(reporte, CNN)
                     cmd.CommandType = CommandType.StoredProcedure
                     'cmd.Connection = CNN
@@ -411,6 +411,6 @@ Public Class FReporteSemanal
 
     Private Sub chkOpcion_CheckedChanged(sender As Object, e As EventArgs) Handles chkOpcion.CheckedChanged
         VerificarOptica()
-        CargarDatos(NumOptica, Desde, Hasta)
+        'CargarDatos()
     End Sub
 End Class
