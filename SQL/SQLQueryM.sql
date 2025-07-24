@@ -328,6 +328,7 @@ CREATE OR ALTER VIEW vwProductosPorOrden AS
 SELECT 
     O.idOrden,
 	F.FechaPago, 
+    O.idMarketing, 
 
     -- Montura (Categoría 3)
     MD.Montura,
@@ -400,6 +401,8 @@ OUTER APPLY (
     INNER JOIN TProducto P ON D.idProducto = P.idProducto
     WHERE D.idOrden = O.idOrden AND P.idCategoria IN (4,5,6)
 ) AS XD;
+
+--SELECT * FROM vwProductosPorOrden
 
 GO
 
@@ -754,6 +757,25 @@ END;
 
 GO
 
+CREATE OR ALTER PROCEDURE dbo.PReporte_Productos
+    @FechaIni DATE,
+    @FechaFin DATE,
+    @Modo INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT *
+    FROM vwProductosPorOrden V
+    WHERE V.FechaPago  >= @FechaIni
+      AND V.FechaPago < DATEADD(DAY, 1, @FechaFin)
+      AND (
+            (@Modo = 1 AND ISNULL(V.idMarketing, 0) = 1)     -- Óptica
+         OR (@Modo = 0 AND ISNULL(V.idMarketing, 0) > 1)     -- Móvil
+      )
+    ORDER BY V.idOrden;
+END;
+
 
 --------------------- FUNCIONES ---------------------------
 
@@ -842,5 +864,5 @@ EXEC PReporte_Semanal '01/05/2025', '30/07/2025', 1;
 EXEC PReporte_TipoPagos '01/05/2025', '30/07/2025', 1;
 EXEC PReporte_Concepto '01/05/2025', '30/07/2025', 1;
 EXEC PReporte_ConceptoTotalVentas '01/05/2025','30/07/2025', 1;
-
+EXEC PReporte_Productos '01/05/2025','30/07/2025', 1;
 

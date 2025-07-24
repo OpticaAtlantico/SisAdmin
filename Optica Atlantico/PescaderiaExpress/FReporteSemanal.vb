@@ -76,6 +76,7 @@ Public Class FReporteSemanal
 
     Private Sub FReporteSemanal_Load(sender As Object, e As EventArgs) Handles Me.Load
         VerificarOptica()
+        ObtenerNombreOptica(1)
         CargarFechas()
         'CargarDatos()
         LimpiarDatagrid()
@@ -281,7 +282,7 @@ Public Class FReporteSemanal
                                    dtTipoPago = BuscarDatos("PReporte_TipoPagos")
                                    dtConcepto = BuscarDatos("PReporte_Concepto")
                                    dtTotales = BuscarDatos("PReporte_ConceptoTotalVentas")
-                                   'dtProductos = BuscarDatos("PReporte_Productos")
+                                   dtProductos = BuscarDatos("PReporte_Productos")
                                    Try
                                        If dtDatos.Rows.Count = 0 Then
                                            MessageBox.Show("No hay datos para mostrar.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information)
