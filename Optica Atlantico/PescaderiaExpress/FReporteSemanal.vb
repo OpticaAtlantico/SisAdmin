@@ -24,18 +24,6 @@ Public Class FReporteSemanal
 
     Public Property BackgroundWorker1 As Object
 
-    'Private Sub btn_Imprimir_Click(sender As Object, e As EventArgs) Handles btn_Imprimir.Click
-    '    Dim dt As DataTable = DirectCast(dgv_Datos.DataSource, DataTable)
-    '    If dt IsNot Nothing AndAlso dt.Rows.Count > 0 Then
-    '        Dim report As New ReporteSemanal()
-    '        report.SetDataSource(dt)
-    '        Dim viewer As New ReportViewer(report)
-    '        viewer.ShowDialog()
-    '    Else
-    '        MessageBox.Show("No hay datos para imprimir.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-    '    End If
-    'End Sub
-
     Public Sub EnviarPorEmail()
         Dim correo As New MailMessage
         Dim smtp As New SmtpClient("smtp.gmail.com", 587)
@@ -78,7 +66,7 @@ Public Class FReporteSemanal
         VerificarOptica()
         ObtenerNombreOptica(1)
         CargarFechas()
-        'CargarDatos()
+        CargarDatos()
         LimpiarDatagrid()
         bgWorker.WorkerReportsProgress = True
         bgWorker.WorkerSupportsCancellation = False

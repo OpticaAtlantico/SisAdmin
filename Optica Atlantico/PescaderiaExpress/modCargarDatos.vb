@@ -43,7 +43,7 @@ Module modCargarDatos
                     cmd.ExecuteNonQuery()
                 End Using
                 Desconectar()
-                MsgBox("✅ Carga de pagos completada correctamente.", MsgBoxStyle.Information)
+                'MsgBox("✅ Carga de pagos completada correctamente.", MsgBoxStyle.Information)
             End If
         Catch ex As Exception
             MsgBox("❌ Error al ejecutar la carga de pagos: " & ex.Message, MsgBoxStyle.Critical)

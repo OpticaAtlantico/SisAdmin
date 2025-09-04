@@ -443,7 +443,7 @@ END;
 
 
 -- FORMA DE USO EN LA APP
---EXEC PReporte_Semanal 1, '01/06/2025', '30/07/2025'; -- para óptica
+--EXEC PReporte_Semanal '01/06/2025', '30/09/2025', 1; -- para óptica
 --EXEC PReporte_Semanal 0, '01/05/2025', '30/07/2025'; -- para móvil
 
 GO
@@ -597,9 +597,128 @@ BEGIN
 END;
 
 
---EXEC dbo.RefrescarPagosConConcepto '01/09/2024','30/07/2025';
+--EXEC dbo.RefrescarPagosConConcepto '01/09/2024','30/09/2025';
 
 GO
+
+--CREATE OR ALTER PROCEDURE dbo.PReporte_ConceptoTotalVentas
+--    @FechaIni DATETIME,
+--    @FechaFin DATETIME,
+--    @Modo INT
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    -- Filtrar pagos por fecha y modo
+--    WITH Pagos AS (
+--        SELECT *
+--        FROM dbo.PagosConConceptoMaterializado
+--        WHERE FechaPago >= @FechaIni
+--          AND FechaPago < DATEADD(DAY, 1, @FechaFin)
+--          AND Modo = @Modo
+--    ),
+--    Ordenes AS (
+--        SELECT DISTINCT idOrden FROM Pagos
+--    )
+
+--    -- 1. Venta al 100% (Contado)
+--    SELECT 'Venta al 100% (Contado)' AS Categoria,
+--           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
+--           SUM(P.Total) AS MontoTotal
+--    FROM Pagos P
+--    WHERE Concepto = 'Venta'
+--      AND NOT EXISTS (
+--          SELECT 1 FROM Pagos X 
+--          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Apartado', 'Abono', 'Retiro')
+--      )
+--      AND (SELECT COUNT(*) FROM Pagos X 
+--           WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta') = 1
+
+--    UNION ALL
+
+--    -- 2. Apartado → Venta (sin retiro)
+--    SELECT 'Apartado → Venta',
+--           COUNT(DISTINCT P.idOrden),
+--           SUM(P.Total)
+--    FROM Pagos P
+--    WHERE Concepto = 'Apartado'
+--      AND EXISTS (
+--          SELECT 1 FROM Pagos X 
+--          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+--      )
+--      AND NOT EXISTS (
+--          SELECT 1 FROM Pagos Y 
+--          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
+--      )
+
+--    UNION ALL
+
+--    -- 3. Apartado → Venta → Retiro
+--    SELECT 'Apartado → Venta → Retiro',
+--           COUNT(DISTINCT P.idOrden),
+--           SUM(P.Total)
+--    FROM Pagos P
+--    WHERE Concepto = 'Apartado'
+--      AND EXISTS (
+--          SELECT 1 FROM Pagos X 
+--          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
+--      )
+--      AND EXISTS (
+--          SELECT 1 FROM Pagos Y 
+--          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
+--      )
+
+--    UNION ALL
+
+--    -- 4. Apartado vigente (sin Venta ni Retiro)
+--    SELECT 'Apartado vigente',
+--           COUNT(DISTINCT P.idOrden),
+--           SUM(P.Total)
+--    FROM Pagos P
+--    WHERE Concepto = 'Apartado'
+--      AND NOT EXISTS (
+--          SELECT 1 FROM Pagos X 
+--          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
+--      )
+
+--    UNION ALL
+
+--    -- 5. Orden completada y retirada
+--    SELECT 'Orden completada y retirada',
+--           COUNT(DISTINCT idOrden),
+--           SUM(Total)
+--    FROM Pagos
+--    WHERE Concepto = 'Retiro'
+
+--    UNION ALL
+
+--    -- 6. Venta (Crédito)
+--    SELECT 'Venta (Crédito)',
+--           COUNT(DISTINCT idOrden),
+--           SUM(Total)
+--    FROM Pagos
+--    WHERE Concepto = 'Venta'
+
+--    UNION ALL
+
+--    -- 7. Apartado no completado (2 pagos)
+--    SELECT 'Apartado no completado (2 pagos)',
+--           COUNT(*) AS TotalOrdenes,
+--           SUM(Total) AS MontoTotal
+--    FROM (
+--        SELECT idOrden, SUM(Total) AS Total
+--        FROM Pagos
+--        WHERE Concepto = 'Apartado'
+--        GROUP BY idOrden
+--        HAVING COUNT(*) = 2
+--           AND NOT EXISTS (
+--               SELECT 1 FROM Pagos 
+--               WHERE idOrden = Pagos.idOrden AND Concepto IN ('Venta', 'Retiro')
+--           )
+--    ) AS P
+
+--    ORDER BY MontoTotal DESC;
+--END;
 
 CREATE OR ALTER PROCEDURE dbo.PReporte_ConceptoTotalVentas
     @FechaIni DATETIME,
@@ -609,118 +728,62 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Filtrar pagos por fecha y modo
-    WITH Pagos AS (
+    -- 1. Filtrar pagos válidos por fecha y modo
+    WITH PagosFiltrados AS (
         SELECT *
         FROM dbo.PagosConConceptoMaterializado
         WHERE FechaPago >= @FechaIni
           AND FechaPago < DATEADD(DAY, 1, @FechaFin)
           AND Modo = @Modo
     ),
-    Ordenes AS (
-        SELECT DISTINCT idOrden FROM Pagos
+
+    -- 2. Agrupar pagos por orden
+    OrdenesAgrupadas AS (
+        SELECT 
+            idOrden,
+            COUNT(*) AS TotalPagos,
+            COUNT(CASE WHEN Concepto = 'Venta' THEN 1 END) AS CantVenta,
+            COUNT(CASE WHEN Concepto = 'Apartado' THEN 1 END) AS CantApartado,
+            COUNT(CASE WHEN Concepto = 'Retiro' THEN 1 END) AS CantRetiro,
+            SUM(CASE WHEN Concepto = 'Venta' THEN Total ELSE 0 END) AS MontoVenta,
+            SUM(CASE WHEN Concepto = 'Apartado' THEN Total ELSE 0 END) AS MontoApartado,
+            SUM(CASE WHEN Concepto = 'Retiro' THEN Total ELSE 0 END) AS MontoRetiro,
+            SUM(Total) AS MontoPagado,
+            MAX(CASE WHEN Concepto = 'Venta' THEN Anticipo ELSE NULL END) AS AnticipoVenta,
+            AVG(CASE WHEN Concepto = 'Apartado' THEN Anticipo ELSE NULL END) AS AnticipoApartado
+        FROM PagosFiltrados
+        GROUP BY idOrden
+    ),
+
+    -- 3. Clasificar cada orden en una sola categoría
+    ClasificacionOrbital AS (
+        SELECT 
+            idOrden,
+            MontoPagado,
+            CASE
+                WHEN TotalPagos = 1 AND CantVenta = 1 AND AnticipoVenta = 100 THEN 'Venta al 100% (Contado)'
+                WHEN CantApartado > 0 AND CantVenta > 0 AND CantRetiro = 0 THEN 'Apartado → Venta (sin retiro)'
+                WHEN CantApartado > 0 AND CantVenta > 0 AND CantRetiro > 0 THEN 'Apartado → Venta → Retiro'
+                WHEN CantApartado > 0 AND CantVenta = 0 AND CantRetiro = 0 AND AnticipoApartado < 40 THEN 'Apartado vigente (sin Venta ni Retiro)'
+                WHEN CantVenta > 0 AND AnticipoVenta < 100 THEN 'Venta (Crédito)'
+                WHEN CantApartado >= 2 AND CantVenta = 0 AND CantRetiro = 0 THEN 'Apartado no completado (2 pagos)'
+                ELSE 'Sin clasificar'
+            END AS EstadoOrbital
+        FROM OrdenesAgrupadas
     )
 
-    -- 1. Venta al 100% (Contado)
-    SELECT 'Venta al 100% (Contado)' AS Categoria,
-           COUNT(DISTINCT P.idOrden) AS TotalOrdenes,
-           SUM(P.Total) AS MontoTotal
-    FROM Pagos P
-    WHERE Concepto = 'Venta'
-      AND NOT EXISTS (
-          SELECT 1 FROM Pagos X 
-          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Apartado', 'Abono', 'Retiro')
-      )
-      AND (SELECT COUNT(*) FROM Pagos X 
-           WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta') = 1
-
-    UNION ALL
-
-    -- 2. Apartado → Venta (sin retiro)
-    SELECT 'Apartado → Venta',
-           COUNT(DISTINCT P.idOrden),
-           SUM(P.Total)
-    FROM Pagos P
-    WHERE Concepto = 'Apartado'
-      AND EXISTS (
-          SELECT 1 FROM Pagos X 
-          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
-      )
-      AND NOT EXISTS (
-          SELECT 1 FROM Pagos Y 
-          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
-      )
-
-    UNION ALL
-
-    -- 3. Apartado → Venta → Retiro
-    SELECT 'Apartado → Venta → Retiro',
-           COUNT(DISTINCT P.idOrden),
-           SUM(P.Total)
-    FROM Pagos P
-    WHERE Concepto = 'Apartado'
-      AND EXISTS (
-          SELECT 1 FROM Pagos X 
-          WHERE X.idOrden = P.idOrden AND X.Concepto = 'Venta'
-      )
-      AND EXISTS (
-          SELECT 1 FROM Pagos Y 
-          WHERE Y.idOrden = P.idOrden AND Y.Concepto = 'Retiro'
-      )
-
-    UNION ALL
-
-    -- 4. Apartado vigente (sin Venta ni Retiro)
-    SELECT 'Apartado vigente',
-           COUNT(DISTINCT P.idOrden),
-           SUM(P.Total)
-    FROM Pagos P
-    WHERE Concepto = 'Apartado'
-      AND NOT EXISTS (
-          SELECT 1 FROM Pagos X 
-          WHERE X.idOrden = P.idOrden AND X.Concepto IN ('Venta', 'Retiro')
-      )
-
-    UNION ALL
-
-    -- 5. Orden completada y retirada
-    SELECT 'Orden completada y retirada',
-           COUNT(DISTINCT idOrden),
-           SUM(Total)
-    FROM Pagos
-    WHERE Concepto = 'Retiro'
-
-    UNION ALL
-
-    -- 6. Venta (Crédito)
-    SELECT 'Venta (Crédito)',
-           COUNT(DISTINCT idOrden),
-           SUM(Total)
-    FROM Pagos
-    WHERE Concepto = 'Venta'
-
-    UNION ALL
-
-    -- 7. Apartado no completado (2 pagos)
-    SELECT 'Apartado no completado (2 pagos)',
-           COUNT(*) AS TotalOrdenes,
-           SUM(Total) AS MontoTotal
-    FROM (
-        SELECT idOrden, SUM(Total) AS Total
-        FROM Pagos
-        WHERE Concepto = 'Apartado'
-        GROUP BY idOrden
-        HAVING COUNT(*) = 2
-           AND NOT EXISTS (
-               SELECT 1 FROM Pagos 
-               WHERE idOrden = Pagos.idOrden AND Concepto IN ('Venta', 'Retiro')
-           )
-    ) AS P
-
+    -- 4. Reporte final por categoría
+    SELECT 
+        EstadoOrbital AS Categoria,
+        COUNT(*) AS TotalOrdenes,
+        SUM(MontoPagado) AS MontoTotal
+    FROM ClasificacionOrbital
+    WHERE EstadoOrbital <> 'Sin clasificar'
+    GROUP BY EstadoOrbital
     ORDER BY MontoTotal DESC;
 END;
 
---EXEC PReporte_ConceptoTotalVentas '01/05/2025','30/07/2025', 1;
+--EXEC PReporte_ConceptoTotalVentas '01/09/2025','30/09/2025', 1;
 
 GO
 
@@ -729,7 +792,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @FechaInicioSistema DATE = '2024-09-01'
+    DECLARE @FechaInicioSistema DATE = '2025-01-01'
     DECLARE @FechaActual DATE = CAST(GETDATE() AS DATE)
     DECLARE @Desde DATE
     DECLARE @Hasta DATE = @FechaActual
@@ -740,15 +803,15 @@ BEGIN
     FROM dbo.PagosConConceptoMaterializado
 
     IF @Existentes = 0
-    BEGIN
-        PRINT '🟢 Tabla vacía. Se realizará carga completa desde el 01/09/2024 hasta hoy.'
-        SET @Desde = @FechaInicioSistema
-    END
+        BEGIN
+            PRINT '🟢 Tabla vacía. Se realizará carga completa desde el 01/01/2025 hasta hoy.'
+            SET @Desde = @FechaInicioSistema
+        END
     ELSE
-    BEGIN
-        PRINT '🟡 Tabla contiene datos. Se actualizará solo la jornada de hoy.'
-        SET @Desde = @FechaActual
-    END
+        BEGIN
+            PRINT '🟡 Tabla contiene datos. Se actualizará solo la jornada de hoy.'
+            SET @Desde = @FechaActual
+        END
 
     EXEC dbo.RefrescarPagosConConcepto 
          @Desde = @Desde, 
@@ -858,11 +921,11 @@ LEFT JOIN PagosPorOrden PPO ON P.idOrden = PPO.idOrden
 LEFT JOIN PrimeraVenta PV ON P.idOrden = PV.idOrden
 LEFT JOIN VentaPorRetiro VPR ON P.idOrden = VPR.idOrden;
 
-GO
 
-EXEC PReporte_Semanal '01/05/2025', '30/07/2025', 1;
-EXEC PReporte_TipoPagos '01/05/2025', '30/07/2025', 1;
-EXEC PReporte_Concepto '01/05/2025', '30/07/2025', 1;
-EXEC PReporte_ConceptoTotalVentas '01/05/2025','30/07/2025', 1;
-EXEC PReporte_Productos '01/05/2025','30/07/2025', 1;
+
+--EXEC PReporte_Semanal '01/09/2024', '30/09/2025', 1;
+--EXEC PReporte_TipoPagos '01/05/2025', '30/07/2025', 1;
+--EXEC PReporte_Concepto '01/05/2025', '30/07/2025', 1;
+--EXEC PReporte_ConceptoTotalVentas '01/05/2025','30/07/2025', 1;
+--EXEC PReporte_Productos '01/05/2025','30/07/2025', 1;
 
