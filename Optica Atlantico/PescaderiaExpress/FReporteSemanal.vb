@@ -305,7 +305,7 @@ Public Class FReporteSemanal
                     cmd.CommandType = CommandType.StoredProcedure
                     'cmd.Connection = CNN
                     cmd.Parameters.AddWithValue("@FechaIni", New DateTime(fechaIni.Year, fechaIni.Month, fechaIni.Day, 0, 0, 0))
-                    cmd.Parameters.AddWithValue("@FechaFin", fechaFin.AddDays(1))
+                    cmd.Parameters.AddWithValue("@FechaFin", New DateTime(fechaFin.Year, fechaFin.Month, fechaFin.Day, 23, 59, 59)) 'fechaFin.AddDays(1))
                     cmd.Parameters.AddWithValue("@Modo", NumOptica)
                     If cmd.ExecuteNonQuery Then
                         Dim da As New SqlDataAdapter(cmd)
