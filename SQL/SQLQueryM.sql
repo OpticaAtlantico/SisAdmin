@@ -57,8 +57,6 @@ GO
 DROP FUNCTION IF EXISTS dbo.fnPagosConConcepto; 
 GO
 
-TRUNCATE TABLE dbo.PagosConConceptoMaterializado
-
 --ELIMINAR TODOS LOS PROCEDIMIENTO, VISTAS Y TABLAS
 
 DROP TABLE IF EXISTS dbo.PagosConConceptoMaterializado; 
@@ -681,22 +679,26 @@ BEGIN
 
     -- Verifica si hay registros en la tabla
     SELECT @Existentes = COUNT(*) 
-    FROM dbo.PagosConConceptoMaterializado
+    FROM dbo.PagosConConceptoMaterializado;
 
     IF @Existentes = 0
-        BEGIN
-            PRINT '🟢 Tabla vacía. Se realizará carga completa desde el 01/01/2025 hasta hoy.'
-            SET @Desde = @FechaInicioSistema
-        END
+    BEGIN
+        PRINT '🟢 Tabla vacía. Cargando desde fecha inicio del sistema.'
+        SET @Desde = @FechaInicioSistema;
+    END
     ELSE
-        BEGIN
-            PRINT '🟡 Tabla contiene datos. Se actualizará solo la jornada de hoy.'
-            SET @Desde = @FechaActual
-        END
+    BEGIN
+        -- Busca la última fecha actualizada
+        SELECT @Desde = ISNULL(MAX(FechaPago), @FechaInicioSistema)
+        FROM dbo.PagosConConceptoMaterializado;
+
+        PRINT '🟡 Tabla contiene datos. Se refrescará desde ' + CONVERT(VARCHAR(10), @Desde, 120) 
+              + ' hasta ' + CONVERT(VARCHAR(10), @Hasta, 120);
+    END
 
     EXEC dbo.RefrescarPagosConConcepto 
          @Desde = @Desde, 
-         @Hasta = @Hasta
+         @Hasta = @Hasta;
 END;
 
 GO

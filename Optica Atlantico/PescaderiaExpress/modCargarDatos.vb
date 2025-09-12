@@ -40,13 +40,24 @@ Module modCargarDatos
             If Conectar() Then
                 Using cmd As New SqlCommand("dbo.spInicializarPagosDiaInteligente", CNN)
                     cmd.CommandType = CommandType.StoredProcedure
-                    cmd.ExecuteNonQuery()
+
+                    ' ⏱️ Aumentamos el tiempo de espera a 2 minutos (120 segundos)
+                    cmd.CommandTimeout = 120
+
+                    Try
+                        cmd.ExecuteNonQuery()
+                        MessageBox.Show("✅ Carga de datos ejecutado correctamente.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Catch ex As SqlException
+                        MessageBox.Show($"❌ Error SQL: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    Catch ex As Exception
+                        MessageBox.Show($"⚠️ Error general: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    End Try
                 End Using
                 Desconectar()
                 'MsgBox("✅ Carga de pagos completada correctamente.", MsgBoxStyle.Information)
             End If
         Catch ex As Exception
-            MsgBox("❌ Error al ejecutar la carga de pagos: " & ex.Message, MsgBoxStyle.Critical)
+            MsgBox("❌ Error al ejecutar la carga de Datos: " & ex.Message, MsgBoxStyle.Critical)
         End Try
     End Sub
 
