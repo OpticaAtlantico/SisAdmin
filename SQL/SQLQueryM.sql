@@ -502,6 +502,98 @@ END;
 
 GO
 
+--CREATE OR ALTER PROCEDURE dbo.RefrescarPagosConConcepto
+--    @Desde DATE,
+--    @Hasta DATE
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    SELECT 
+--        O.FechaOrden AS FechaVenta,
+--        O.idOrden AS IdOrden,
+--        O.SubTotal,
+--        O.Descuento,
+--        O.Total,
+--        PC.Porcentaje AS Anticipo,
+--        F.FechaPago,
+--        F.Monto AS MontoAbonado,
+--        PC.Porcentaje,
+--        T.Nombre AS TipoPago,
+--        PC.Apartado,
+--        PC.Concepto,
+--        PC.NumPago,
+--        EA.Nombre AS Asesor,
+--        EG.Nombre AS Gerente,
+--        EO.Nombre AS Optometrista,
+--        EM.Nombre AS Marketing,
+--        PC.Modo,
+--        GETDATE() AS FechaActualizacion
+--    INTO #PagosTemp
+--    FROM dbo.fnPagosConConcepto() PC
+--    INNER JOIN TFormaPago F ON F.id = PC.id
+--    INNER JOIN TOrden O ON F.idOrden = O.idOrden
+--    INNER JOIN TTipoPago T ON F.idTipoPago = T.id
+--    LEFT JOIN TEmpleado EA ON EA.idEmpleado = O.idAsesor
+--    LEFT JOIN TEmpleado EG ON EG.idEmpleado = O.idGerente
+--    LEFT JOIN TEmpleado EO ON EO.idEmpleado = O.idOpto
+--    LEFT JOIN TEmpleado EM ON EM.idEmpleado = O.idMarketing
+--    WHERE F.FechaPago >= @Desde AND F.FechaPago < DATEADD(DAY, 1, @Hasta);
+
+--    CREATE CLUSTERED INDEX IX_PagosTemp_IdOrden ON #PagosTemp(IdOrden);
+
+--    MERGE dbo.PagosConConceptoMaterializado AS Target
+--    USING #PagosTemp AS Source
+--    ON Target.IdOrden = Source.IdOrden 
+--       AND Target.Concepto = Source.Concepto 
+--       AND Target.Modo = Source.Modo
+--    WHEN NOT MATCHED BY TARGET THEN
+--        INSERT (
+--            FechaVenta,
+--            IdOrden,
+--            SubTotal,
+--            Descuento,
+--            Total,
+--            Porcentaje,
+--            FechaPago,
+--            MontoAbonado,
+--            Anticipo,
+--            TipoPago,
+--            Apartado,
+--            Concepto,
+--            NumPago,
+--            Asesor,
+--            Optometrista,
+--            Gerente,
+--            Marketing,
+--            Modo,
+--            FechaActualizacion
+--        )
+--        VALUES (
+--            Source.FechaVenta,
+--            Source.IdOrden,
+--            Source.SubTotal,
+--            Source.Descuento,
+--            Source.Total,
+--            Source.Porcentaje,
+--            Source.FechaPago,
+--            Source.MontoAbonado,
+--            Source.Anticipo,
+--            Source.TipoPago,
+--            Source.Apartado,
+--            Source.Concepto,
+--            Source.NumPago,
+--            Source.Asesor,
+--            Source.Optometrista,
+--            Source.Gerente,
+--            Source.Marketing,
+--            Source.Modo,
+--            Source.FechaActualizacion
+--        );
+
+--    DROP TABLE #PagosTemp;
+--END;
+
 CREATE OR ALTER PROCEDURE dbo.RefrescarPagosConConcepto
     @Desde DATE,
     @Hasta DATE
@@ -509,6 +601,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- 1. Armar dataset temporal con todos los pagos del rango
     SELECT 
         O.FechaOrden AS FechaVenta,
         O.idOrden AS IdOrden,
@@ -540,13 +633,29 @@ BEGIN
     LEFT JOIN TEmpleado EM ON EM.idEmpleado = O.idMarketing
     WHERE F.FechaPago >= @Desde AND F.FechaPago < DATEADD(DAY, 1, @Hasta);
 
-    CREATE CLUSTERED INDEX IX_PagosTemp_IdOrden ON #PagosTemp(IdOrden);
+    -- 2. Índice en temp para acelerar el MERGE
+    CREATE CLUSTERED INDEX IX_PagosTemp ON #PagosTemp(IdOrden, Concepto, Modo, NumPago, FechaPago);
 
+    -- 3. MERGE ajustado
     MERGE dbo.PagosConConceptoMaterializado AS Target
     USING #PagosTemp AS Source
-    ON Target.IdOrden = Source.IdOrden 
+    ON Target.IdOrden     = Source.IdOrden 
        AND Target.Concepto = Source.Concepto 
-       AND Target.Modo = Source.Modo
+       AND Target.Modo     = Source.Modo
+       AND Target.NumPago  = Source.NumPago
+       AND Target.FechaPago = Source.FechaPago
+    WHEN MATCHED THEN
+        UPDATE SET
+            Target.MontoAbonado       = Source.MontoAbonado,
+            Target.Porcentaje         = Source.Porcentaje,
+            Target.Anticipo           = Source.Anticipo,
+            Target.TipoPago           = Source.TipoPago,
+            Target.Apartado           = Source.Apartado,
+            Target.Asesor             = Source.Asesor,
+            Target.Optometrista       = Source.Optometrista,
+            Target.Gerente            = Source.Gerente,
+            Target.Marketing          = Source.Marketing,
+            Target.FechaActualizacion = GETDATE()
     WHEN NOT MATCHED BY TARGET THEN
         INSERT (
             FechaVenta,
@@ -588,11 +697,13 @@ BEGIN
             Source.Gerente,
             Source.Marketing,
             Source.Modo,
-            Source.FechaActualizacion
+            GETDATE()
         );
 
     DROP TABLE #PagosTemp;
 END;
+GO
+
 
 
 --EXEC dbo.RefrescarPagosConConcepto '01/09/2024','30/09/2025';
@@ -671,35 +782,39 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @FechaInicioSistema DATE = '2025-01-01'
-    DECLARE @FechaActual DATE = CAST(GETDATE() AS DATE)
-    DECLARE @Desde DATE
-    DECLARE @Hasta DATE = @FechaActual
-    DECLARE @Existentes INT
+    DECLARE @FechaInicioSistema DATE = '2025-01-01';
+    DECLARE @FechaActual DATE = CAST(GETDATE() AS DATE);
+    DECLARE @Desde DATE;
+    DECLARE @Hasta DATE = @FechaActual;
+    DECLARE @Existentes INT;
 
-    -- Verifica si hay registros en la tabla
+    -- Verifica si hay registros en la tabla materializada
     SELECT @Existentes = COUNT(*) 
     FROM dbo.PagosConConceptoMaterializado;
 
     IF @Existentes = 0
     BEGIN
-        PRINT '🟢 Tabla vacía. Cargando desde fecha inicio del sistema.'
+        PRINT '🟢 Tabla vacía. Cargando desde fecha inicio del sistema.';
         SET @Desde = @FechaInicioSistema;
     END
     ELSE
     BEGIN
-        -- Busca la última fecha actualizada
-        SELECT @Desde = ISNULL(MAX(FechaPago), @FechaInicioSistema)
-        FROM dbo.PagosConConceptoMaterializado;
+        -- Refrescar últimos 7 días para cubrir cambios atrasados
+        SET @Desde = DATEADD(DAY, -7, @FechaActual);
 
-        PRINT '🟡 Tabla contiene datos. Se refrescará desde ' + CONVERT(VARCHAR(10), @Desde, 120) 
-              + ' hasta ' + CONVERT(VARCHAR(10), @Hasta, 120);
+        PRINT '🟡 Tabla contiene datos. Se refrescarán los últimos 7 días: '
+              + CONVERT(VARCHAR(10), @Desde, 120) 
+              + ' hasta ' 
+              + CONVERT(VARCHAR(10), @Hasta, 120);
     END
 
+    -- Ejecutar refresco con el rango definido
     EXEC dbo.RefrescarPagosConConcepto 
          @Desde = @Desde, 
          @Hasta = @Hasta;
 END;
+GO
+
 
 GO
 
