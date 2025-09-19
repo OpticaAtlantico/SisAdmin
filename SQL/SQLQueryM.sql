@@ -713,67 +713,156 @@ GO
 CREATE OR ALTER PROCEDURE dbo.PReporte_ConceptoTotalVentas
     @FechaIni DATETIME,
     @FechaFin DATETIME,
-    @Modo INT
+    @Modo INT,
+    @UmbralAnticipo INT = 40  -- opcional: umbral (%) para considerar que un apartado "pasa a venta"
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- 1. Filtrar pagos válidos por fecha y modo
-    WITH PagosFiltrados AS (
-        SELECT *
+    -- 1) Órdenes que tuvieron al menos un pago en el periodo
+    ;WITH OrdersInRange AS (
+        SELECT DISTINCT idOrden
         FROM dbo.PagosConConceptoMaterializado
         WHERE FechaPago >= @FechaIni
           AND FechaPago < DATEADD(DAY, 1, @FechaFin)
           AND Modo = @Modo
     ),
 
-    -- 2. Agrupar pagos por orden
+    -- 2) Historial de pagos de esas órdenes
+    PagosOrdenes AS (
+        SELECT p.*
+        FROM dbo.PagosConConceptoMaterializado p
+        INNER JOIN OrdersInRange r ON p.idOrden = r.idOrden
+        WHERE p.Modo = @Modo
+    ),
+
+    -- 3) Detectamos la primera fecha donde la venta alcanza el umbral de anticipo
+    ConversionVenta AS (
+        SELECT 
+            idOrden,
+            MIN(FechaPago) AS FechaConversion
+        FROM (
+            SELECT 
+                p.idOrden,
+                p.FechaPago,
+                SUM(p.Total) OVER (PARTITION BY p.idOrden ORDER BY p.FechaPago ROWS UNBOUNDED PRECEDING) AS Acumulado,
+                SUM(p.Total) OVER (PARTITION BY p.idOrden) AS TotalOrden
+            FROM PagosOrdenes p
+        ) t
+        WHERE Acumulado >= TotalOrden * @UmbralAnticipo / 100
+        GROUP BY idOrden
+    ),
+
+    -- 4) Agrupamos información por orden
     OrdenesAgrupadas AS (
         SELECT 
             idOrden,
+            MIN(FechaVenta) AS FechaVenta,
+            MIN(FechaPago) AS FechaPrimerPago,
+            MAX(FechaPago) AS UltFechaPago,
             COUNT(*) AS TotalPagos,
             COUNT(CASE WHEN Concepto = 'Venta' THEN 1 END) AS CantVenta,
             COUNT(CASE WHEN Concepto = 'Apartado' THEN 1 END) AS CantApartado,
             COUNT(CASE WHEN Concepto = 'Retiro' THEN 1 END) AS CantRetiro,
             SUM(CASE WHEN Concepto = 'Venta' THEN Total ELSE 0 END) AS MontoVenta,
             SUM(CASE WHEN Concepto = 'Apartado' THEN Total ELSE 0 END) AS MontoApartado,
-            SUM(CASE WHEN Concepto = 'Retiro' THEN Total ELSE 0 END) AS MontoRetiro,
             SUM(Total) AS MontoPagado,
             MAX(CASE WHEN Concepto = 'Venta' THEN Anticipo ELSE NULL END) AS AnticipoVenta,
-            AVG(CASE WHEN Concepto = 'Apartado' THEN Anticipo ELSE NULL END) AS AnticipoApartado
-        FROM PagosFiltrados
+            AVG(CASE WHEN Concepto = 'Apartado' THEN Anticipo ELSE NULL END) AS AnticipoApartado,
+            MAX(CASE WHEN Concepto = 'Venta' AND FechaPago >= @FechaIni AND FechaPago < DATEADD(DAY,1,@FechaFin) THEN 1 ELSE 0 END) AS HasVentaEnPeriodo,
+            MAX(CASE WHEN FechaPago >= @FechaIni AND FechaPago < DATEADD(DAY,1,@FechaFin) THEN 1 ELSE 0 END) AS HasPagoEnPeriodo
+        FROM PagosOrdenes
         GROUP BY idOrden
     ),
 
-    -- 3. Clasificar cada orden en una sola categoría
+    -- 5) Clasificación de la orden
     ClasificacionOrbital AS (
         SELECT 
-            idOrden,
-            MontoPagado,
+            o.idOrden,
+            o.MontoPagado,
+            o.MontoVenta,
+            o.MontoApartado,
+            o.FechaVenta,
+            o.FechaPrimerPago,
+            o.CantVenta,
+            o.CantApartado,
+            o.CantRetiro,
+            o.AnticipoVenta,
+            o.AnticipoApartado,
+            o.HasVentaEnPeriodo,
+            o.HasPagoEnPeriodo,
+            c.FechaConversion,
             CASE
-                WHEN TotalPagos = 1 AND CantVenta = 1 AND AnticipoVenta = 100 THEN 'Venta al 100% (Contado)'
-                WHEN CantApartado > 0 AND CantVenta > 0 AND CantRetiro = 0 THEN 'Apartado → Venta (sin retiro)'
-                WHEN CantApartado > 0 AND CantVenta > 0 AND CantRetiro > 0 THEN 'Apartado → Venta → Retiro'
-                WHEN CantApartado > 0 AND CantVenta = 0 AND CantRetiro = 0 AND AnticipoApartado < 40 THEN 'Apartado vigente (sin Venta ni Retiro)'
-                WHEN CantVenta > 0 AND AnticipoVenta < 100 THEN 'Venta (Crédito)'
-                WHEN CantApartado >= 2 AND CantVenta = 0 AND CantRetiro = 0 THEN 'Apartado no completado (2 pagos)'
+                -- Venta al 100% (Contado)
+                WHEN TotalPagos = 1 AND CantVenta = 1 AND AnticipoVenta = 100
+                     AND (CAST(FechaVenta AS DATE) = CAST(FechaPrimerPago AS DATE) OR HasVentaEnPeriodo = 1)
+                THEN 'Venta al 100% (Contado)'
+
+                -- Apartado → Venta (sin retiro, misma fecha)
+                WHEN CantApartado > 0 AND CantVenta > 0 AND CantRetiro = 0
+                     AND CAST(FechaVenta AS DATE) = CAST(FechaPrimerPago AS DATE)
+                THEN 'Apartado → Venta (sin retiro, misma fecha)'
+
+                -- Apartado → Venta (sin retiro, abono posterior)
+                WHEN CantApartado > 0 AND CantVenta > 0 AND CantRetiro = 0
+                     AND (HasVentaEnPeriodo = 1 OR (CAST(FechaVenta AS DATE) <> CAST(FechaPrimerPago AS DATE) AND HasPagoEnPeriodo = 1))
+                THEN 'Apartado → Venta (sin retiro, abono posterior)'
+
+                -- Apartado → Venta → Retiro (misma fecha)
+                WHEN CantApartado > 0 AND CantVenta > 0 AND CantRetiro > 0
+                     AND CAST(FechaVenta AS DATE) = CAST(FechaPrimerPago AS DATE)
+                THEN 'Apartado → Venta → Retiro (misma fecha)'
+
+                -- Apartado → Venta → Retiro (fecha distinta)
+                WHEN CantApartado > 0 AND CantVenta > 0 AND CantRetiro > 0
+                     AND (HasVentaEnPeriodo = 1 OR (CAST(FechaVenta AS DATE) <> CAST(FechaPrimerPago AS DATE) AND HasPagoEnPeriodo = 1))
+                THEN 'Apartado → Venta → Retiro (fecha distinta)'
+
+                -- Apartado vigente (sin Venta ni Retiro, anticipo < umbral)
+                WHEN CantApartado > 0 AND CantVenta = 0 AND CantRetiro = 0 AND ISNULL(AnticipoApartado,0) < @UmbralAnticipo
+                THEN 'Apartado vigente (sin Venta ni Retiro)'
+
+                -- Venta (Crédito), ahora contamos si tuvo **pago de venta en el periodo** o conversión dentro del rango
+                WHEN CantVenta > 0 AND AnticipoVenta < 100
+                     AND (HasVentaEnPeriodo = 1 OR (FechaConversion BETWEEN @FechaIni AND @FechaFin))
+                THEN 'Venta (Crédito)'
+
+                -- Apartado no completado (2 pagos)
+                WHEN CantApartado >= 2 AND CantVenta = 0 AND CantRetiro = 0 AND HasPagoEnPeriodo = 1
+                THEN 'Apartado no completado (2 pagos)'
+
                 ELSE 'Sin clasificar'
             END AS EstadoOrbital
-        FROM OrdenesAgrupadas
+        FROM OrdenesAgrupadas o
+        LEFT JOIN ConversionVenta c ON o.idOrden = c.idOrden
     )
 
-    -- 4. Reporte final por categoría
+    -- 6) Reporte final
     SELECT 
         EstadoOrbital AS Categoria,
         COUNT(*) AS TotalOrdenes,
-        SUM(MontoPagado) AS MontoTotal
+        SUM(
+            CASE 
+                WHEN EstadoOrbital IN (
+                    'Venta al 100% (Contado)',
+                    'Venta (Crédito)',
+                    'Apartado → Venta (sin retiro, misma fecha)',
+                    'Apartado → Venta (sin retiro, abono posterior)',
+                    'Apartado → Venta → Retiro (misma fecha)',
+                    'Apartado → Venta → Retiro (fecha distinta)'
+                ) THEN ISNULL(MontoVenta,0)
+                WHEN EstadoOrbital LIKE 'Apartado%' THEN ISNULL(MontoApartado,0)
+                ELSE ISNULL(MontoPagado,0)
+            END
+        ) AS MontoTotal
     FROM ClasificacionOrbital
     WHERE EstadoOrbital <> 'Sin clasificar'
     GROUP BY EstadoOrbital
     ORDER BY MontoTotal DESC;
 END;
 
---EXEC PReporte_ConceptoTotalVentas '01/09/2025','30/09/2025', 1;
+
+--EXEC PReporte_ConceptoTotalVentas '18/09/2025','18/09/2025', 1;
 
 GO
 
