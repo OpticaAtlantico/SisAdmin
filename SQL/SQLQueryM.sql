@@ -543,98 +543,6 @@ END;
 
 GO
 
---CREATE OR ALTER PROCEDURE dbo.RefrescarPagosConConcepto
---    @Desde DATE,
---    @Hasta DATE
---AS
---BEGIN
---    SET NOCOUNT ON;
-
---    SELECT 
---        O.FechaOrden AS FechaVenta,
---        O.idOrden AS IdOrden,
---        O.SubTotal,
---        O.Descuento,
---        O.Total,
---        PC.Porcentaje AS Anticipo,
---        F.FechaPago,
---        F.Monto AS MontoAbonado,
---        PC.Porcentaje,
---        T.Nombre AS TipoPago,
---        PC.Apartado,
---        PC.Concepto,
---        PC.NumPago,
---        EA.Nombre AS Asesor,
---        EG.Nombre AS Gerente,
---        EO.Nombre AS Optometrista,
---        EM.Nombre AS Marketing,
---        PC.Modo,
---        GETDATE() AS FechaActualizacion
---    INTO #PagosTemp
---    FROM dbo.fnPagosConConcepto() PC
---    INNER JOIN TFormaPago F ON F.id = PC.id
---    INNER JOIN TOrden O ON F.idOrden = O.idOrden
---    INNER JOIN TTipoPago T ON F.idTipoPago = T.id
---    LEFT JOIN TEmpleado EA ON EA.idEmpleado = O.idAsesor
---    LEFT JOIN TEmpleado EG ON EG.idEmpleado = O.idGerente
---    LEFT JOIN TEmpleado EO ON EO.idEmpleado = O.idOpto
---    LEFT JOIN TEmpleado EM ON EM.idEmpleado = O.idMarketing
---    WHERE F.FechaPago >= @Desde AND F.FechaPago < DATEADD(DAY, 1, @Hasta);
-
---    CREATE CLUSTERED INDEX IX_PagosTemp_IdOrden ON #PagosTemp(IdOrden);
-
---    MERGE dbo.PagosConConceptoMaterializado AS Target
---    USING #PagosTemp AS Source
---    ON Target.IdOrden = Source.IdOrden 
---       AND Target.Concepto = Source.Concepto 
---       AND Target.Modo = Source.Modo
---    WHEN NOT MATCHED BY TARGET THEN
---        INSERT (
---            FechaVenta,
---            IdOrden,
---            SubTotal,
---            Descuento,
---            Total,
---            Porcentaje,
---            FechaPago,
---            MontoAbonado,
---            Anticipo,
---            TipoPago,
---            Apartado,
---            Concepto,
---            NumPago,
---            Asesor,
---            Optometrista,
---            Gerente,
---            Marketing,
---            Modo,
---            FechaActualizacion
---        )
---        VALUES (
---            Source.FechaVenta,
---            Source.IdOrden,
---            Source.SubTotal,
---            Source.Descuento,
---            Source.Total,
---            Source.Porcentaje,
---            Source.FechaPago,
---            Source.MontoAbonado,
---            Source.Anticipo,
---            Source.TipoPago,
---            Source.Apartado,
---            Source.Concepto,
---            Source.NumPago,
---            Source.Asesor,
---            Source.Optometrista,
---            Source.Gerente,
---            Source.Marketing,
---            Source.Modo,
---            Source.FechaActualizacion
---        );
-
---    DROP TABLE #PagosTemp;
---END;
-
 CREATE OR ALTER PROCEDURE dbo.RefrescarPagosConConcepto
     @Desde DATE,
     @Hasta DATE
@@ -744,8 +652,6 @@ BEGIN
     DROP TABLE #PagosTemp;
 END;
 GO
-
-
 
 --EXEC dbo.RefrescarPagosConConcepto '01/09/2024','30/09/2025';
 
