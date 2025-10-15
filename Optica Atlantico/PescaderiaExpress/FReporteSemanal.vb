@@ -76,7 +76,7 @@ Public Class FReporteSemanal
 
     Private Sub VerificarOptica()
         If Me.chkOpcion.Checked = True Then
-            NumOptica = 0
+            NumOptica = -1
         Else
             NumOptica = 1
         End If
