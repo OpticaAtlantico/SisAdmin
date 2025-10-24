@@ -491,10 +491,6 @@ BEGIN
         T.TotalPorTipoPago DESC;
 END;
 
-
-
-
-
 --COMO SE UTILIZA EN LA APP
 --EXEC PReporte_TipoPagos '01/05/2025', '30/07/2025', 0; -- Para móvil
 --EXEC PReporte_TipoPagos '01/05/2025', '30/07/2025', 1; -- Para óptica
@@ -651,11 +647,10 @@ BEGIN
 
     DROP TABLE #PagosTemp;
 END;
+
 GO
 
 --EXEC dbo.RefrescarPagosConConcepto '01/09/2024','30/09/2025';
-
-GO
 
 CREATE OR ALTER PROCEDURE dbo.PReporte_ConceptoTotalVentas
     @FechaIni DATETIME,
@@ -845,44 +840,45 @@ BEGIN
          @Desde = @Desde, 
          @Hasta = @Hasta;
 END;
-GO
-
-CREATE OR ALTER TRIGGER trg_Pagos_UpdateMaterializado
-ON dbo.TFormaPago
-AFTER INSERT, UPDATE, DELETE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    -- INSERTADOS O ACTUALIZADOS
-    MERGE dbo.PagosConConceptoMaterializado AS target
-    USING (
-        SELECT 
-            p.PagoID,
-            p.OrdenID,
-            p.Monto,
-            p.FechaPago,
-            o.ClienteID,
-            o.TotalOrden
-        FROM inserted p
-        INNER JOIN dbo.TOrdenes o ON p.OrdenID = o.OrdenID
-    ) AS src
-    ON target.PagoID = src.PagoID
-    WHEN MATCHED THEN 
-        UPDATE SET 
-            target.Monto = src.Monto,
-            target.FechaPago = src.FechaPago,
-            target.ClienteID = src.ClienteID,
-            target.TotalOrden = src.TotalOrden
-    WHEN NOT MATCHED BY TARGET THEN
-        INSERT (PagoID, OrdenID, Monto, FechaPago, ClienteID, TotalOrden)
-        VALUES (src.PagoID, src.OrdenID, src.Monto, src.FechaPago, src.ClienteID, src.TotalOrden)
-    WHEN NOT MATCHED BY SOURCE 
-         AND target.PagoID IN (SELECT PagoID FROM deleted)
-        THEN DELETE;
-END;
 
 GO
+
+--CREATE OR ALTER TRIGGER trg_Pagos_UpdateMaterializado
+--ON dbo.TFormaPago
+--AFTER INSERT, UPDATE, DELETE
+--AS
+--BEGIN
+--    SET NOCOUNT ON;
+
+--    -- INSERTADOS O ACTUALIZADOS
+--    MERGE dbo.PagosConConceptoMaterializado AS target
+--    USING (
+--        SELECT 
+--            p.PagoID,
+--            p.OrdenID,
+--            p.Monto,
+--            p.FechaPago,
+--            o.ClienteID,
+--            o.TotalOrden
+--        FROM inserted p
+--        INNER JOIN dbo.TOrdenes o ON p.OrdenID = o.OrdenID
+--    ) AS src
+--    ON target.PagoID = src.PagoID
+--    WHEN MATCHED THEN 
+--        UPDATE SET 
+--            target.Monto = src.Monto,
+--            target.FechaPago = src.FechaPago,
+--            target.ClienteID = src.ClienteID,
+--            target.TotalOrden = src.TotalOrden
+--    WHEN NOT MATCHED BY TARGET THEN
+--        INSERT (PagoID, OrdenID, Monto, FechaPago, ClienteID, TotalOrden)
+--        VALUES (src.PagoID, src.OrdenID, src.Monto, src.FechaPago, src.ClienteID, src.TotalOrden)
+--    WHEN NOT MATCHED BY SOURCE 
+--         AND target.PagoID IN (SELECT PagoID FROM deleted)
+--        THEN DELETE;
+--END;
+
+--GO
 
 CREATE OR ALTER PROCEDURE dbo.PReporte_Productos
     @FechaIni DATE,
@@ -903,7 +899,7 @@ BEGIN
     ORDER BY V.idOrden;
 END;
 
-
+GO
 --------------------- FUNCIONES ---------------------------
 
 CREATE OR ALTER FUNCTION dbo.fnPagosConConcepto()
