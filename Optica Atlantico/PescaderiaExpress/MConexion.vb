@@ -3,12 +3,13 @@ Module MConexion
     Public CNN, CNN2, CNN3, CNN4, CNN5 As New SqlConnection
     Public Enunciado As SqlCommand
     Public Respuesta As SqlDataReader
+    Private xServer As String = ".\SQLSERVER2022"
 
     Public Function Conectar() As Boolean
         Dim Valor As Boolean = False
         Try
             If CNN.State = ConnectionState.Closed Then
-                CNN.ConnectionString = "Server=.\SQLEXPRESS; database=BDOptica2; integrated security=yes"
+                CNN.ConnectionString = "Server=" & xServer & "; database=BDOptica2; integrated security=yes"
                 ' CNN.ConnectionString = "Server=SERVI\SQLEXPRESS; database=BDOptica2; integrated security=yes"
                 CNN.Open()
                 If CNN.State = ConnectionState.Open Then
@@ -24,7 +25,7 @@ Module MConexion
         Dim Valor As Boolean = False
         Try
             If CNN2.State = ConnectionState.Closed Then
-                CNN2.ConnectionString = "Server=.\SQLEXPRESS; database=BDOptica2; integrated security=yes"
+                CNN2.ConnectionString = "Server=" & xServer & "; database=BDOptica2; integrated security=yes"
                 ' CNN2.ConnectionString = "Server=SERVI\SQLEXPRESS; database=BDOptica2; integrated security=yes"
 
                 CNN2.Open()
@@ -42,7 +43,7 @@ Module MConexion
         Dim Valor As Boolean = False
         Try
             If CNN3.State = ConnectionState.Closed Then
-                CNN3.ConnectionString = "Server=.\SQLEXPRESS; database=BDOptica2; integrated security=yes"
+                CNN3.ConnectionString = "Server=" & xServer & "; database=BDOptica2; integrated security=yes"
                 ' CNN3.ConnectionString = "Server=SERVI\SQLEXPRESS; database=BDOptica2; integrated security=yes"
 
                 CNN3.Open()
@@ -60,7 +61,7 @@ Module MConexion
         Dim Valor As Boolean = False
         Try
             If CNN4.State = ConnectionState.Closed Then
-                CNN4.ConnectionString = "Server=.\SQLEXPRESS; database=BDOptica2; integrated security=yes"
+                CNN4.ConnectionString = "Server=" & xServer & "; database=BDOptica2; integrated security=yes"
                 ' CNN4.ConnectionString = "Server=SERVI\SQLEXPRESS; database=BDOptica2; integrated security=yes"
                 CNN4.Open()
                 If CNN4.State = ConnectionState.Open Then
@@ -77,7 +78,7 @@ Module MConexion
         Dim Valor As Boolean = False
         Try
             If CNN5.State = ConnectionState.Closed Then
-                CNN5.ConnectionString = "Server=.\SQLEXPRESS; database=BDOptica2; integrated security=yes"
+                CNN5.ConnectionString = "Server=" & xServer & "; database=BDOptica2; integrated security=yes"
                 'CNN5.ConnectionString = "Server=SERVI\SQLEXPRESS; database=BDOptica2; integrated security=yes"
                 CNN5.Open()
                 If CNN5.State = ConnectionState.Open Then

@@ -894,7 +894,7 @@ BEGIN
       AND V.FechaPago < DATEADD(DAY, 1, @FechaFin)
       AND (
             (@Modo = 1 AND ISNULL(V.idMarketing, 0) = 1)     -- Óptica
-         OR (@Modo = 0 AND ISNULL(V.idMarketing, 0) > 1)     -- Móvil
+         OR (@Modo = -1 AND ISNULL(V.idMarketing, 0) > 1)     -- Móvil
       )
     ORDER BY V.idOrden;
 END;
