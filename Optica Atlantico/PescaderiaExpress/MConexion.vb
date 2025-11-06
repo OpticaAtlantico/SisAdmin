@@ -3,7 +3,7 @@ Module MConexion
     Public CNN, CNN2, CNN3, CNN4, CNN5 As New SqlConnection
     Public Enunciado As SqlCommand
     Public Respuesta As SqlDataReader
-    Private xServer As String = ".\SQLSERVER2022"
+    Private xServer As String = ".\SQLEXPRESS"
 
     Public Function Conectar() As Boolean
         Dim Valor As Boolean = False

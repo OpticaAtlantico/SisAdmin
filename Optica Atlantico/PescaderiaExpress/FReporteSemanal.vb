@@ -307,6 +307,13 @@ Public Class FReporteSemanal
                     cmd.Parameters.AddWithValue("@FechaIni", fechaIni.Date) ' New DateTime(fechaIni.Year, fechaIni.Month, fechaIni.Day, 0, 0, 0))
                     cmd.Parameters.AddWithValue("@FechaFin", fechaFin.Date) ' New DateTime(fechaFin.Year, fechaFin.Month, fechaFin.Day, 23, 59, 59)) 'fechaFin.AddDays(1))
                     cmd.Parameters.AddWithValue("@Modo", NumOptica)
+                    If reporte = "PReporte_ConceptoTotalVentas" Then
+                        If NumOptica = -1 Then
+                            cmd.Parameters.AddWithValue("@UmbralAnticipo", 20)
+                        Else
+                            cmd.Parameters.AddWithValue("@UmbralAnticipo", 40)
+                        End If
+                    End If
                     If cmd.ExecuteNonQuery Then
                         Dim da As New SqlDataAdapter(cmd)
                         Dim dt As New DataTable()
