@@ -309,7 +309,7 @@ Public Class FReporteSemanal
                     cmd.Parameters.AddWithValue("@Modo", NumOptica)
                     If reporte = "PReporte_ConceptoTotalVentas" Then
                         If NumOptica = -1 Then
-                            cmd.Parameters.AddWithValue("@UmbralAnticipo", 20)
+                            cmd.Parameters.AddWithValue("@UmbralAnticipo", 1)
                         Else
                             cmd.Parameters.AddWithValue("@UmbralAnticipo", 40)
                         End If
